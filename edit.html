@@ -83,6 +83,9 @@ input,select,textarea{font:inherit;color:inherit}
 .erow .left .lc:not(:first-child) .fld{text-align:center;text-align-last:center}
 .erow input.fld:focus,.erow select.fld:focus{outline:2px solid #8db5e0;background:#fff}
 .eact{display:flex;gap:3px;flex-wrap:wrap}
+.eact .btn.on{background:#e8590c;color:#fff;border-color:#e8590c}
+.tbdb{font-size:10px;font-weight:700;color:#b34700;background:#fff1e6;border:1px dashed #e8590c;border-radius:4px;padding:0 5px;line-height:15px;white-space:nowrap}
+.card.tbd{border-style:dashed;opacity:.62;background-image:repeating-linear-gradient(45deg,rgba(0,0,0,.09) 0 5px,transparent 5px 10px)}
 .tl{position:relative;flex:none;overflow:hidden}
 .tl .bgd{position:absolute;inset:0;background-image:repeating-linear-gradient(to right,transparent 0,transparent 69px,var(--line2) 69px,var(--line2) 70px)}
 .tl .nw{position:absolute;top:0;bottom:0;background:rgba(160,150,120,.14)}
@@ -499,7 +502,7 @@ function calc(){
   const add=(m,i,v)=>m.set(i,(m.get(i)||0)+v);
   for(const eq of S.equipments){
     const items=schedule(eq);SCH.set(eq.id,items);
-    if(eq.done)continue; // 생산완료 장비는 부하·크레인 집계에서 제외
+    if(eq.done||eq.tbd)continue; // 생산완료·일정 미확정 장비는 부하·크레인 집계에서 제외
     for(const it of items){
       const d=it.d,ls=Math.floor(it.s+1e-9),le=Math.ceil(it.e-1e-9);
       for(let i=ls;i<le;i++){
@@ -613,8 +616,8 @@ function renderDash(){
     const items=SCH.get(eq.id),H=layoutEq(items,xS,xE);
     const sel=(f,arr,v)=>`<select class="fld" data-eq="${eq.id}" data-f="${f}">${arr.map(x=>`<option value="${x}"${String(x)===String(v)?' selected':''}>${f==='stage'?x+'단':x}</option>`).join('')}</select>`;
     h+=`<div class="row erow" data-eq="${eq.id}" style="height:${H}px"><div class="left" style="height:${H}px${eqColor(eq)?`;--c:${eqColor(eq)};background:color-mix(in srgb,${eqColor(eq)} 38%,#fff)`:''}">
-      <div class="lc" style="width:${LEFTW[0]}px"><input class="fld" data-eq="${eq.id}" data-f="title" value="${esc(eq.title)}" title="과제명"><div class="eact">
-        <button class="btn sm" data-act="mup" data-eq="${eq.id}" title="위로 이동"${vi===0?' disabled':''}>▲</button><button class="btn sm" data-act="mdn" data-eq="${eq.id}" title="아래로 이동"${vi===vis.length-1?' disabled':''}>▼</button><button class="btn sm" data-act="hide" data-eq="${eq.id}" title="이 장비 숨기기">🙈</button><button class="btn sm" data-act="done" data-eq="${eq.id}" title="생산완료 처리 (대시보드에서 제외, '완료장비' 탭에서 확인)">✔ 완료</button>
+      <div class="lc" style="width:${LEFTW[0]}px"><input class="fld" data-eq="${eq.id}" data-f="title" value="${esc(eq.title)}" title="과제명">${eq.tbd?'<span class="tbdb">⏳ 일정 미확정 · 부하 제외</span>':''}<div class="eact">
+        <button class="btn sm" data-act="mup" data-eq="${eq.id}" title="위로 이동"${vi===0?' disabled':''}>▲</button><button class="btn sm" data-act="mdn" data-eq="${eq.id}" title="아래로 이동"${vi===vis.length-1?' disabled':''}>▼</button><button class="btn sm" data-act="hide" data-eq="${eq.id}" title="이 장비 숨기기">🙈</button><button class="btn sm${eq.tbd?' on':''}" data-act="tbd" data-eq="${eq.id}" title="${eq.tbd?'일정 미확정 상태 — 클릭하면 확정(부하 산정에 포함)':'자재 이슈 등으로 일정 미확정 — 계획은 표시하되 부하 산정에서 제외'}">⏳ ${eq.tbd?'미확정 중':'미확정'}</button><button class="btn sm" data-act="done" data-eq="${eq.id}" title="생산완료 처리 (대시보드에서 제외, '완료장비' 탭에서 확인)">✔ 완료</button>
         <button class="btn sm" data-act="edit" data-eq="${eq.id}" title="옵션/세부사항 수정">⚙ 옵션</button>
         <button class="btn sm" data-act="addproc" data-eq="${eq.id}" title="공정 추가">＋공정</button>
         <button class="btn sm dng" data-act="del" data-eq="${eq.id}" title="장비 삭제">✕</button></div></div>
@@ -627,7 +630,7 @@ function renderDash(){
     for(const it of items){
       const d=it.d;
       const site=d.site==='3P'?'s3':'s2';
-      const cc=cardColor(d),cls=['card',cc?'':site,d.witness==='O'?'wit':'',it.inst.added&&!it.inst.splitOf?'add':'',d.type==='대체옵션'?'alt':'',it.est?'est':''].join(' ');
+      const cc=cardColor(d),cls=['card',cc?'':site,d.witness==='O'?'wit':'',it.inst.added&&!it.inst.splitOf?'add':'',d.type==='대체옵션'?'alt':'',it.est?'est':'',eq.tbd?'tbd':''].join(' ');
       const l3=crane3Line(d,eq);
       const tip=[`${d.no??''} ${d.name}`,`구분: ${d.type||'추가'}${it.inst.added&&!it.inst.splitOf?' (추가 공정)':''}${it.part?` (분할 ${it.part[0]}/${it.part[1]})`:''}`,`작업장 ${d.site||'-'} / 입회 ${d.witness==='O'?'O':'X'} / ${d.owner||'HP'}${d.noMan==='X'?' / 직접인력 불필요(LT만 소요, 부하 제외)':''}${isMove(d)?(d.dn==='O'?' / 주간이동 O (주·야간 이동 가능)':' / 주간이동 X (야간이동만 가능)'):''}`,
         it.ot?`잔업 처리: LT ${f1(it.lt)}일 중 ${f1(it.ot)}일분(${f1(it.ot*it.crew)} man-day)을 마지막 날 부하에 합산`:'',d.unit==='LT'?`LT 직접 관리 (공수 단위: LT) = ${f1(it.lt)}일`:`공수 ${f1(it.md)}h ÷ ${HPD}h = ${f1(it.md/HPD)} man-day ÷ ${it.crew}인 = LT ${f1(it.lt)}일`,`2P크레인 ${d.crane2||'-'} / 3P크레인 ${l3||'-'}`,
@@ -658,7 +661,7 @@ function fitCards(){
 }
 function openDayStatus(date){
   const n=dn(date),di=wdIdx(n),isWd=WD[di]===n;
-  const vis=S.equipments.filter(e=>!e.hidden&&!e.done);
+  const vis=S.equipments.filter(e=>!e.hidden&&!e.done&&!e.tbd);
   const rows=[];
   if(isWd)for(const eq of vis){
     for(const it of (SCH.get(eq.id)||[])){
@@ -1129,6 +1132,7 @@ view.addEventListener('click',e=>{
   else if(a==='undone'){const eq=S.equipments.find(x=>x.id===b.dataset.eq);eq.done=false;delete eq.doneDate;save();render();toast(`'${eq.title}'을(를) 대시보드로 복귀했습니다`)}
   else if(a==='dtog'){const k=b.dataset.eq;ui.doneOpen=ui.doneOpen||{};ui.doneOpen[k]=!ui.doneOpen[k];renderDone()}
   else if(a==='ddel'){const eq=S.equipments.find(x=>x.id===b.dataset.eq);if(confirm(`완료장비 '${eq.title}'을(를) 완전히 삭제할까요?`)){S.equipments=S.equipments.filter(x=>x.id!==eq.id);save();render()}}
+  else if(a==='tbd'){const eq=S.equipments.find(x=>x.id===id);eq.tbd=!eq.tbd;save();render();toast(eq.tbd?`'${eq.title}' 일정 미확정 처리 — 부하·크레인 산정에서 제외됩니다`:`'${eq.title}' 일정 확정 — 부하 산정에 포함됩니다`)}
   else if(a==='hide'){const eq=S.equipments.find(x=>x.id===id);eq.hidden=true;save();render();toast(`'${eq.title}' 숨김 (상단 '숨김 장비'에서 다시 표시)`)}
   else if(a==='edit')openEquip(id);
   else if(a==='addproc')openAddProc(id);
