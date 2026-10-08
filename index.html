@@ -56,7 +56,11 @@ input,select,textarea{font:inherit;color:inherit}
 .bd{position:absolute;bottom:24px;left:0;right:0;font-size:9px;text-decoration:none;font-weight:700;line-height:11px}
 .bd.h{background:#2f6f9f;color:#fff}
 .bd.e{background:#8a5cc4;color:#fff}
-.dcell.today{background-image:linear-gradient(rgba(70,130,200,.17),rgba(70,130,200,.17))}
+.dcell.today{background-image:linear-gradient(rgba(232,89,12,.10),rgba(232,89,12,.10));box-shadow:inset 2px 0 0 #e8590c,inset -2px 0 0 #e8590c}
+.hdrrow .dcell.today{background:#e8590c;background-image:none;box-shadow:none}
+.hdrrow .dcell.today b,.hdrrow .dcell.today i{color:#fff!important}
+.tdb{position:absolute;top:3px;left:50%;transform:translateX(-50%);font-style:normal;font-size:9px;font-weight:800;letter-spacing:1px;background:#ffd24a;color:#4a3500;border-radius:3px;padding:0 5px;line-height:13px}
+.hdrrow .dcell.today b{margin-top:14px}
 .dcell.ms{border-left:2px solid var(--navy2)}
 .lbl{font-weight:700;width:100%;display:flex;justify-content:space-between;align-items:center;padding:0 4px}
 .lbl small{font-weight:500;color:var(--ink2)}
@@ -69,7 +73,10 @@ input,select,textarea{font:inherit;color:inherit}
 .rate-b{background:var(--b)}.dcell.rate-b{background:var(--b)}.rate-g{background:var(--g)}.rate-y{background:var(--y)}.rate-o{background:var(--o)}.rate-r{background:var(--r);font-weight:700}.dcell.rate-g{background:var(--g)}.dcell.rate-y{background:var(--y)}.dcell.rate-o{background:var(--o)}.dcell.rate-r{background:var(--r);font-weight:700}
 .crane-r{background:#ff6b6b;color:#fff;font-weight:700}
 .erow{box-sizing:content-box;border-bottom:3px solid #4a6485;margin-bottom:6px;position:relative;box-shadow:0 1px 0 rgba(0,0,0,.12)}
-.erow .left{box-shadow:inset 5px 0 0 #4a6485}
+.erow{border-bottom:0;margin-bottom:8px;box-shadow:none}
+.erow .left{--c:#9fb3cc;border-radius:10px 0 0 10px;box-shadow:inset 6px 0 0 var(--c),0 1px 4px rgba(0,0,0,.18)}
+.erow .left .lc{border-right-color:rgba(0,0,0,.07)}
+.erow .left .lc:first-child{padding-left:12px}
 .erow .left{background:var(--panel)}
 .erow .lc{border-bottom:0;padding:4px 5px;align-items:flex-start;flex-direction:column;gap:3px;justify-content:center}
 .erow input.fld,.erow select.fld{width:100%;border:1px solid var(--line2);border-radius:5px;padding:3px 4px;background:#fcfbf8}
@@ -79,7 +86,7 @@ input,select,textarea{font:inherit;color:inherit}
 .tl{position:relative;flex:none;overflow:hidden}
 .tl .bgd{position:absolute;inset:0;background-image:repeating-linear-gradient(to right,transparent 0,transparent 69px,var(--line2) 69px,var(--line2) 70px)}
 .tl .nw{position:absolute;top:0;bottom:0;background:rgba(160,150,120,.14)}
-.tl .tdy{position:absolute;top:0;bottom:0;width:70px;background:rgba(70,130,200,.11)}
+.tl .tdy{position:absolute;top:0;bottom:0;width:70px;box-sizing:border-box;background:rgba(232,89,12,.08);border-left:2px solid #e8590c;border-right:2px solid #e8590c;pointer-events:none}
 .card{position:absolute;border-radius:7px;padding:2px 5px 1px;overflow:hidden;cursor:grab;user-select:none;touch-action:none;border:1px solid;border-left-width:5px;box-shadow:0 1px 2px rgba(20,30,50,.15);font-size:11.5px;line-height:1.25;display:flex;flex-direction:column;justify-content:flex-start;gap:1px}
 .card .cx{position:absolute;top:1px;right:1px;width:15px;height:15px;line-height:13px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.75);color:#a3231a;font-size:12px;font-weight:700;cursor:pointer;opacity:.55;text-align:center}
 .card:hover .cx{opacity:1}
@@ -557,7 +564,7 @@ function renderDash(){
   const hpI=n=>{const i=WDI.get(n);return i!=null&&HPA[i]?i:null};
   const dcls=n=>{const w=dow(n);let c='dcell';if(isRestDay(n))c+=(isHol(n)||(S.settings.dayOv||{})[ds(n)]?' hol':' we')+' rd';if(n===today)c+=' today';if(new Date(n*DAY).getUTCDate()===1)c+=' ms';return c};
   let h=`<div class="inner" style="width:${LW+TW}px"><div class="sumblock">`;
-  h+=`<div class="row hdrrow">${leftHdr}<div class="row">${days.map(n=>{const i=WDI.get(n),bd=i==null?'':(!HPA[i]?'<u class="bd e">협력만</u>':!EXA[i]?'<u class="bd h">HP만</u>':''),o=(S.settings.dayOv||{})[ds(n)],nt=(S.settings.dayNote||{})[ds(n)]||'';return `<div class="${dcls(n)} hd" data-day="${ds(n)}" title="클릭: 휴무일/근무 설정${o?' (수정됨)':''}${nt?'\n비고: '+esc(nt):''}"><b>${md2(n)}</b><i>${WK[dow(n)]}${o?' ✎':''}</i>${nt?`<u class="dn">${esc(nt)}</u>`:''}${bd}<button class="dstb" data-act="dstat" data-day="${ds(n)}" title="이 일자의 일일 작업현황">현황</button></div>`}).join('')}</div></div>`;
+  h+=`<div class="row hdrrow">${leftHdr}<div class="row">${days.map(n=>{const i=WDI.get(n),bd=i==null?'':(!HPA[i]?'<u class="bd e">협력만</u>':!EXA[i]?'<u class="bd h">HP만</u>':''),o=(S.settings.dayOv||{})[ds(n)],nt=(S.settings.dayNote||{})[ds(n)]||'';return `<div class="${dcls(n)} hd" data-day="${ds(n)}" title="클릭: 휴무일/근무 설정${o?' (수정됨)':''}${nt?'\n비고: '+esc(nt):''}">${n===today?'<em class="tdb">TODAY</em>':''}<b>${md2(n)}</b><i>${WK[dow(n)]}${o?' ✎':''}</i>${nt?`<u class="dn">${esc(nt)}</u>`:''}${bd}<button class="dstb" data-act="dstat" data-day="${ds(n)}" title="이 일자의 일일 작업현황">현황</button></div>`}).join('')}</div></div>`;
   const lab=(t,sub,extra='')=>`<div class="left"><div class="lc" style="width:${LW}px"><div class="lbl"><span>${t} <small>${sub||''}</small></span>${extra}</div></div></div>`;
   const rowOf=(label,cellFn,cls='')=>`<div class="row sumrow ${cls}">${label}<div class="row">${days.map(n=>cellFn(n,hpI(n),WDI.has(n)?WDI.get(n):null)).join('')}</div></div>`;
   const capS=n=>{const v=st.capaOv[ds(n)];return v!=null&&v!==''?+v:(isOffDay(n)?0:st.capa)};
@@ -605,7 +612,7 @@ function renderDash(){
     const vi=vis.indexOf(eq);
     const items=SCH.get(eq.id),H=layoutEq(items,xS,xE);
     const sel=(f,arr,v)=>`<select class="fld" data-eq="${eq.id}" data-f="${f}">${arr.map(x=>`<option value="${x}"${String(x)===String(v)?' selected':''}>${f==='stage'?x+'단':x}</option>`).join('')}</select>`;
-    h+=`<div class="row erow" data-eq="${eq.id}" style="height:${H}px"><div class="left" style="height:${H}px${eqColor(eq)?`;background:${eqColor(eq)}`:''}">
+    h+=`<div class="row erow" data-eq="${eq.id}" style="height:${H}px"><div class="left" style="height:${H}px${eqColor(eq)?`;--c:${eqColor(eq)};background:color-mix(in srgb,${eqColor(eq)} 38%,#fff)`:''}">
       <div class="lc" style="width:${LEFTW[0]}px"><input class="fld" data-eq="${eq.id}" data-f="title" value="${esc(eq.title)}" title="과제명"><div class="eact">
         <button class="btn sm" data-act="mup" data-eq="${eq.id}" title="위로 이동"${vi===0?' disabled':''}>▲</button><button class="btn sm" data-act="mdn" data-eq="${eq.id}" title="아래로 이동"${vi===vis.length-1?' disabled':''}>▼</button><button class="btn sm" data-act="hide" data-eq="${eq.id}" title="이 장비 숨기기">🙈</button><button class="btn sm" data-act="done" data-eq="${eq.id}" title="생산완료 처리 (대시보드에서 제외, '완료장비' 탭에서 확인)">✔ 완료</button>
         <button class="btn sm" data-act="edit" data-eq="${eq.id}" title="옵션/세부사항 수정">⚙ 옵션</button>
