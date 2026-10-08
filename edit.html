@@ -9,7 +9,7 @@
   --bg:#f1efe9; --panel:#fff; --ink:#1c2432; --ink2:#5b6475; --line:#d8d3c6; --line2:#e8e4d9;
   --navy:#1d3b5c; --navy2:#2b5584; --p2:#2f6f9f; --p2bg:#e1edf7; --p3:#2b7a6a; --p3bg:#dff0ea;
   --amber:#f2b134; --we:#ece8dd; --hol:#f3dcd8; --today:#fff6d6;
-  --g:#b9e6a1; --y:#fff08a; --o:#ffc078; --r:#ff8b82;
+  --b:#a9d0f5; --g:#b9e6a1; --y:#fff08a; --o:#ffc078; --r:#ff8b82;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
@@ -66,7 +66,7 @@ input,select,textarea{font:inherit;color:inherit}
 .sumrow .dcell{height:28px}
 .capa-in{width:62px;border:1px solid transparent;background:transparent;text-align:center;padding:2px 0;border-radius:4px}
 .capa-in:hover,.capa-in:focus{border-color:var(--navy2);background:#fff;outline:0}
-.rate-g{background:var(--g)}.rate-y{background:var(--y)}.rate-o{background:var(--o)}.rate-r{background:var(--r);font-weight:700}.dcell.rate-g{background:var(--g)}.dcell.rate-y{background:var(--y)}.dcell.rate-o{background:var(--o)}.dcell.rate-r{background:var(--r);font-weight:700}
+.rate-b{background:var(--b)}.dcell.rate-b{background:var(--b)}.rate-g{background:var(--g)}.rate-y{background:var(--y)}.rate-o{background:var(--o)}.rate-r{background:var(--r);font-weight:700}.dcell.rate-g{background:var(--g)}.dcell.rate-y{background:var(--y)}.dcell.rate-o{background:var(--o)}.dcell.rate-r{background:var(--r);font-weight:700}
 .crane-r{background:#ff6b6b;color:#fff;font-weight:700}
 .erow{box-sizing:content-box;border-bottom:3px solid #4a6485;margin-bottom:6px;position:relative;box-shadow:0 1px 0 rgba(0,0,0,.12)}
 .erow .left{box-shadow:inset 5px 0 0 #4a6485}
@@ -561,11 +561,11 @@ function renderDash(){
   const lab=(t,sub,extra='')=>`<div class="left"><div class="lc" style="width:${LW}px"><div class="lbl"><span>${t} <small>${sub||''}</small></span>${extra}</div></div></div>`;
   const rowOf=(label,cellFn,cls='')=>`<div class="row sumrow ${cls}">${label}<div class="row">${days.map(n=>cellFn(n,hpI(n),WDI.has(n)?WDI.get(n):null)).join('')}</div></div>`;
   const capS=n=>{const v=st.capaOv[ds(n)];return v!=null&&v!==''?+v:(isOffDay(n)?0:st.capa)};
-  const rateLg=`<span class="rlg" title="부하율 색상 기준"><i class="rate-g">≤100%</i><i class="rate-y">≤110%</i><i class="rate-o">≤120%</i><i class="rate-r">&gt;120%</i></span>`;
+  const rateLg=`<span class="rlg" title="부하율 색상 기준"><i class="rate-b">&lt;80%</i><i class="rate-g">≤100%</i><i class="rate-y">≤110%</i><i class="rate-o">≤120%</i><i class="rate-r">&gt;120%</i></span>`;
   const rateCell=(n,l,c)=>{
     if(l<=0)return `<div class="${dcls(n)}"></div>`;
     if(c<=0)return isOffDay(n)?`<div class="${dcls(n)}"></div>`:`<div class="${dcls(n)} rate-r">∞</div>`;
-    const r=l/c*100,k=r<=100?'g':r<=110?'y':r<=120?'o':'r';
+    const r=l/c*100,k=r<80?'b':r<=100?'g':r<=110?'y':r<=120?'o':'r';
     return `<div class="${dcls(n)} rate-${k}">${Math.round(r)}%</div>`};
   const loadV=(i,site)=>i==null?0:(site==='2P'?AGG.load2:site==='3P'?AGG.load3:AGG.load).get(i)||0;
   
@@ -1335,11 +1335,11 @@ function zipStore(files){
 }
 const colL=n=>{let s='';n++;while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26)}return s};
 const xe=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])).replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g,'');
-const XS={def:0,hdr:1,bold:2,g:3,y:4,o:5,r:6,grey:7,num:8,off:9,s2:10,s3:11,mix:12,crane:13,ctr:14,tot:15,left:16,date:17};
-let XFILLS0=13,XFS0=18;
-const XFILLS=['','','1D3B5C','B9E6A1','FFF08A','FFC078','FF8B82','ECE8DD','E1EDF7','DFF0EA','E6DDF3','EFEADB','FF6B6B'];
+const XS={def:0,hdr:1,bold:2,g:3,y:4,o:5,r:6,grey:7,num:8,off:9,s2:10,s3:11,mix:12,crane:13,ctr:14,tot:15,left:16,date:17,b:18};
+let XFILLS0=14,XFS0=19;
+const XFILLS=['','','1D3B5C','B9E6A1','FFF08A','FFC078','FF8B82','ECE8DD','E1EDF7','DFF0EA','E6DDF3','EFEADB','FF6B6B','A9D0F5'];
 // xf: [font,fill,numFmt,halign,wrap]
-const XFS=[[0,0,0,'left',0],[1,2,0,'center',1],[2,0,0,'left',0],[0,3,9,'center',0],[0,4,9,'center',0],[0,5,9,'center',0],[2,6,9,'center',0],[0,7,0,'center',0],[0,0,164,'center',0],[0,7,0,'center',0],[3,8,0,'center',1],[3,9,0,'center',1],[3,10,0,'center',1],[1,12,164,'center',0],[0,0,0,'center',1],[2,11,164,'center',0],[0,0,0,'left',1],[0,0,0,'center',0]];
+const XFS=[[0,0,0,'left',0],[1,2,0,'center',1],[2,0,0,'left',0],[0,3,9,'center',0],[0,4,9,'center',0],[0,5,9,'center',0],[2,6,9,'center',0],[0,7,0,'center',0],[0,0,164,'center',0],[0,7,0,'center',0],[3,8,0,'center',1],[3,9,0,'center',1],[3,10,0,'center',1],[1,12,164,'center',0],[0,0,0,'center',1],[2,11,164,'center',0],[0,0,0,'left',1],[0,0,0,'center',0],[0,13,9,'center',0]];
 function xlsStyles(){
   return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="1"><numFmt numFmtId="164" formatCode="0.0"/></numFmts>
 <fonts count="5"><font><sz val="10"/><name val="Malgun Gothic"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Malgun Gothic"/></font><font><b/><sz val="10"/><name val="Malgun Gothic"/></font><font><sz val="9"/><name val="Malgun Gothic"/></font><font><sz val="9"/><color rgb="FFFFFFFF"/><name val="Malgun Gothic"/></font></fonts>
@@ -1382,7 +1382,7 @@ function exportXlsx(){
   rows.push([...lab('보유 Man-day capa · Total',XS.tot),...days.map(n=>{const i=WDI.get(n);return i==null||!HPA[i]?{v:'',s:XS.off}:{v:capS(n),s:XS.tot}})]);
   rows.push([...lab('부하율 · 2, 3P Total',XS.bold),...days.map(n=>{
     const i=WDI.get(n);if(i==null||!HPA[i])return{v:'',s:XS.off};const l=AGG.load.get(i)||0,c=capS(n);
-    if(l<=0)return{v:'',s:XS.def};if(c<=0)return{v:'∞',s:XS.r};const r=l/c;return{v:Math.round(r*1000)/1000,s:r*100<=100?XS.g:r*100<=110?XS.y:r*100<=120?XS.o:XS.r}})]);
+    if(l<=0)return{v:'',s:XS.def};if(c<=0)return{v:'∞',s:XS.r};const r=l/c;return{v:Math.round(r*1000)/1000,s:r*100<80?XS.b:r*100<=100?XS.g:r*100<=110?XS.y:r*100<=120?XS.o:XS.r}})]);
   const cr=(t,map)=>rows.push([...lab(t,XS.bold),...days.map(n=>{const i=WDI.get(n);if(i==null)return{v:'',s:XS.off};const v=Math.round((map.get(i)||0)*10)/10;return{v:v||'',s:v>=3?XS.crane:XS.num}})]);
   cr('2P 크레인 소요량',AGG.c2);cr('3P A라인 크레인',AGG.c3.A);cr('3P B라인 크레인',AGG.c3.B);cr('3P C라인 크레인',AGG.c3.C);
   const nsum=rows.length;
