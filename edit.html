@@ -279,7 +279,7 @@ function mergeSeed(){
   M.processes=out;M.manday=md;
 }
 function seedManday(){const map=seedMap(S.master.processes),md=JSON.parse(JSON.stringify(S.master.manday));for(const sp of SEED.master.processes){const d=SEED.master.manday[sp.id]||{};if(Object.keys(d).length)md[map.get(sp.id)||sp.id]=JSON.parse(JSON.stringify(d))}return md}
-const COLW=70, LEFTW=[260,90,88,88,64,64], LW=LEFTW.reduce((a,b)=>a+b,0), LANEH=60;
+const COLW=70, LEFTW=[288,78,88,81,62,57], LW=LEFTW.reduce((a,b)=>a+b,0), LANEH=60;
 const WK=['일','월','화','수','목','금','토'];
 const GAPMM=96/25.4; // 1mm
 const HPD=8; // 1 man-day = 8 공수(시간)
