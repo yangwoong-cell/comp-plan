@@ -53,7 +53,7 @@ input,select,textarea{font:inherit;color:inherit}
 .hdrrow .dcell .dn{display:block;font-size:9px;line-height:10px;color:#4a5262;max-height:20px;overflow:hidden;padding:0 2px;margin-top:1px;word-break:keep-all;overflow-wrap:anywhere;text-decoration:none}
 .hd{cursor:pointer;position:relative}
 .hd:hover{filter:brightness(.93)}
-.bd{position:absolute;bottom:0;left:0;right:0;font-size:9px;text-decoration:none;font-weight:700;line-height:11px}
+.bd{position:absolute;bottom:24px;left:0;right:0;font-size:9px;text-decoration:none;font-weight:700;line-height:11px}
 .bd.h{background:#2f6f9f;color:#fff}
 .bd.e{background:#8a5cc4;color:#fff}
 .dcell.today{background-image:linear-gradient(rgba(70,130,200,.17),rgba(70,130,200,.17))}
@@ -66,7 +66,7 @@ input,select,textarea{font:inherit;color:inherit}
 .sumrow .dcell{height:28px}
 .capa-in{width:62px;border:1px solid transparent;background:transparent;text-align:center;padding:2px 0;border-radius:4px}
 .capa-in:hover,.capa-in:focus{border-color:var(--navy2);background:#fff;outline:0}
-.rate-g{background:var(--g)}.rate-y{background:var(--y)}.rate-o{background:var(--o)}.rate-r{background:var(--r);font-weight:700}
+.rate-g{background:var(--g)}.rate-y{background:var(--y)}.rate-o{background:var(--o)}.rate-r{background:var(--r);font-weight:700}.dcell.rate-g{background:var(--g)}.dcell.rate-y{background:var(--y)}.dcell.rate-o{background:var(--o)}.dcell.rate-r{background:var(--r);font-weight:700}
 .crane-r{background:#ff6b6b;color:#fff;font-weight:700}
 .erow{box-sizing:content-box;border-bottom:3px solid #4a6485;margin-bottom:6px;position:relative;box-shadow:0 1px 0 rgba(0,0,0,.12)}
 .erow .left{box-shadow:inset 5px 0 0 #4a6485}
@@ -104,6 +104,7 @@ input,select,textarea{font:inherit;color:inherit}
 .pill.ot{background:#b3261e;color:#fff;border-color:#b3261e}
 .pill.dn{background:#1f2a44;color:#ffd24a;border-color:#1f2a44}
 .lt{font-weight:700;color:var(--ink)}
+.card .sl{display:inline-flex;gap:3px;align-items:center;white-space:nowrap;flex:none}
 .bubble{position:fixed;z-index:200;background:var(--navy);color:#fff;padding:3px 8px;border-radius:5px;font-weight:700;pointer-events:none;font-size:12px}
 .empty{padding:40px;color:var(--ink2);text-align:center}
 /* modal */
@@ -111,6 +112,10 @@ input,select,textarea{font:inherit;color:inherit}
 #modalRoot.on{display:flex}
 .mdl{background:var(--panel);border-radius:10px;width:min(780px,100%);box-shadow:0 14px 50px rgba(0,0,0,.4)}
 .mdl.narrow{width:min(520px,100%)}
+.adj{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}.adj .btn{padding:2px 7px}
+.l1-in{width:62px;border:1px solid transparent;background:transparent;text-align:center;padding:2px 0;border-radius:4px;font:inherit}.l1-in:hover,.l1-in:focus{border-color:var(--navy2);background:#fff;outline:0}
+.dtype{display:grid;gap:6px}.dsub2{display:grid;gap:4px;margin:0 0 0 26px;padding:6px 10px;border-left:3px solid var(--line)}
+.rlg{display:inline-flex;gap:3px;margin-left:auto;margin-right:8px}.rlg i{font-style:normal;font-size:10.5px;font-weight:600;padding:1px 5px;border-radius:4px;border:1px solid rgba(0,0,0,.12);color:#2a2a2a;white-space:nowrap}
 .dsum{display:flex;flex-wrap:wrap;gap:6px 14px;background:#f1ede2;border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:13px}.dsum b{color:var(--navy)}
 .dst{width:100%}.dst .dgh td{background:#dfe7f1;font-weight:700;color:var(--navy);text-align:left}.dst .dsub td{background:#f6f1e3;border-top:1px solid var(--line)}.dst td.c{text-align:center}.dst td.n{text-align:right}
 .mhead{padding:12px 18px;border-bottom:1px solid var(--line);font-size:15px;font-weight:700;background:var(--navy);color:#fff;border-radius:10px 10px 0 0}
@@ -314,7 +319,8 @@ function load(){
   try{const t=localStorage.getItem(KEY); if(t){const o=JSON.parse(t); if(o&&o.master&&o.equipments){migrate(o);return o}}}catch(e){}
   return null;
 }
-function migrate(o){const s=o.settings;if(!s.dayOv)s.dayOv={};if(!s.dayNote)s.dayNote={};
+function migrate(o){const s=o.settings;if(!s.load1)s.load1={bal:{},asm:{}};
+  if(s.load1.asm&&Object.keys(s.load1.asm).length&&!s.load1.tot){const L=s.load1,tt={};for(const d of new Set([...Object.keys(L.bal||{}),...Object.keys(L.asm)]))tt[d]=Math.round(((+(L.bal||{})[d]||0)+(+L.asm[d]||0))*1000)/1000;L.tot=tt;L.asm={}} // 구버전(발란싱+조립시운전 입력) → Total 입력 방식으로 변환if(!s.dayOv)s.dayOv={};if(!s.dayNote)s.dayNote={};
   if(s.capa==null||s.capa2!=null){const c2=s.capa2??6,c3=s.capa3??6;s.capa=c2+c3;const ov=s.capaOv||{},n={};
     for(const k in ov){if(!k.includes('|'))n[k]=ov[k]}
     for(const k in ov){if(k.includes('|')){const d=k.split('|')[1];if(n[d]==null)n[d]=(ov['2P|'+d]??c2)+(ov['3P|'+d]??c3)}}
@@ -339,8 +345,9 @@ function redo(){if(!REDO.length)return;UNDO.push(lastStr);restore(REDO.pop());to
 /* ---------- calendar (working-day index space) ---------- */
 let HPA=[],EXA=[];
 function dayDefault(x){const w=dow(x);if(S.settings.skipWeekend&&(w===0||w===6))return false;return !S.settings.holidays.includes(ds(x))}
-const isOffDay=n=>{const ov=(S.settings.dayOv||{})[ds(n)];return !dayDefault(n)||!!(ov&&!ov.hp&&!ov.ext)};
-function dayState(x){const ov=(S.settings.dayOv||{})[ds(x)];if(ov)return{hp:!!ov.hp,ext:!!ov.ext,ov:true};const d=dayDefault(x);return{hp:d,ext:d,ov:false}}
+const isRestDay=n=>{const ov=(S.settings.dayOv||{})[ds(n)];if(ov)return !!ov.off||!(ov.hp&&ov.ext);return !dayDefault(n)}; // 휴무일(정상근무일이 아닌 날) — HP·협력업체 작업 가능 체크와 무관하게 휴무 표시(빨간 글자·음영) 적용
+const isOffDay=n=>{const ov=(S.settings.dayOv||{})[ds(n)];if(ov)return !ov.hp&&!ov.ext;return !dayDefault(n)}; // 직접 설정한 일자는 그 설정을 따름(공휴일·주말도 근무로 지정하면 휴무가 아님)
+function dayState(x){const ov=(S.settings.dayOv||{})[ds(x)];if(ov)return{hp:!!ov.hp,ext:!!ov.ext,off:!!ov.off,ov:true};const d=dayDefault(x);return{hp:d,ext:d,ov:false}}
 function buildCal(){
   WD=[];WDI=new Map();HPA=[];EXA=[];
   const a=dn('2024-01-01'),b=dn('2036-12-31');
@@ -434,6 +441,8 @@ function crane3Line(d,eq){
 }
 
 /* ---------- scheduling ---------- */
+const manLoaded=d=>(!d.owner||d.owner==='HP')&&d.noMan!=='X';
+const cardLbl=it=>it.d.noMan==='X'?'':manLoaded(it.d)?f1(it.lt*it.crew)+'md':f1(it.lt)+'d'; // 직접인력 투입 공정은 Man-day(md), 그 외(협력·불필요)는 LT(d)
 function schedule(eq){
   const P=pmap(),arr=[];
   for(const inst of eq.procs){
@@ -523,7 +532,7 @@ function layoutEq(items,xS,xE){
     const nm=d.name;
     const fn={fs:CARDFS,lines:wrapN(nm+(it.part?' '+it.part[0]+'/'+it.part[1]:''),(inner-11)*0.95,CARDFS).lines};it._fs=CARDFS;
     const l1=fn.lines*fn.fs*1.25/14.375;
-    let pw=tw(f1(it.lt)+'d',10.5,true)+10+(d.witness==='O'?32:0)+28+(it.crew===3?28:0);
+    let pw=tw(cardLbl(it),10.5,true)+10+(d.witness==='O'?32:0)+28+(it.crew===3?28:0);
     const rows=Math.max(1,Math.ceil(pw/(it._w-14)));
     it._h=Math.ceil(5+l1*14.375+rows*14+(rows>0?1:0));
   }
@@ -546,24 +555,36 @@ function renderDash(){
   const days=[];for(let i=0;i<N;i++)days.push(gs+i);
   const leftHdr=`<div class="left">${['과제명','과제코드','Category','모델명','단수','호기'].map((t,i)=>`<div class="lc" style="width:${LEFTW[i]}px">${t}</div>`).join('')}</div>`;
   const hpI=n=>{const i=WDI.get(n);return i!=null&&HPA[i]?i:null};
-  const dcls=n=>{const w=dow(n);let c='dcell';if(isOffDay(n))c+=(isHol(n)||(S.settings.dayOv||{})[ds(n)]?' hol':' we')+' rd';if(n===today)c+=' today';if(new Date(n*DAY).getUTCDate()===1)c+=' ms';return c};
+  const dcls=n=>{const w=dow(n);let c='dcell';if(isRestDay(n))c+=(isHol(n)||(S.settings.dayOv||{})[ds(n)]?' hol':' we')+' rd';if(n===today)c+=' today';if(new Date(n*DAY).getUTCDate()===1)c+=' ms';return c};
   let h=`<div class="inner" style="width:${LW+TW}px"><div class="sumblock">`;
   h+=`<div class="row hdrrow">${leftHdr}<div class="row">${days.map(n=>{const i=WDI.get(n),bd=i==null?'':(!HPA[i]?'<u class="bd e">협력만</u>':!EXA[i]?'<u class="bd h">HP만</u>':''),o=(S.settings.dayOv||{})[ds(n)],nt=(S.settings.dayNote||{})[ds(n)]||'';return `<div class="${dcls(n)} hd" data-day="${ds(n)}" title="클릭: 휴무일/근무 설정${o?' (수정됨)':''}${nt?'\n비고: '+esc(nt):''}"><b>${md2(n)}</b><i>${WK[dow(n)]}${o?' ✎':''}</i>${nt?`<u class="dn">${esc(nt)}</u>`:''}${bd}<button class="dstb" data-act="dstat" data-day="${ds(n)}" title="이 일자의 일일 작업현황">현황</button></div>`}).join('')}</div></div>`;
   const lab=(t,sub,extra='')=>`<div class="left"><div class="lc" style="width:${LW}px"><div class="lbl"><span>${t} <small>${sub||''}</small></span>${extra}</div></div></div>`;
   const rowOf=(label,cellFn,cls='')=>`<div class="row sumrow ${cls}">${label}<div class="row">${days.map(n=>cellFn(n,hpI(n),WDI.has(n)?WDI.get(n):null)).join('')}</div></div>`;
   const capS=n=>{const v=st.capaOv[ds(n)];return v!=null&&v!==''?+v:(isOffDay(n)?0:st.capa)};
+  const rateLg=`<span class="rlg" title="부하율 색상 기준"><i class="rate-g">≤100%</i><i class="rate-y">≤110%</i><i class="rate-o">≤120%</i><i class="rate-r">&gt;120%</i></span>`;
   const rateCell=(n,l,c)=>{
     if(l<=0)return `<div class="${dcls(n)}"></div>`;
-    if(c<=0)return `<div class="${dcls(n)} rate-r">∞</div>`;
+    if(c<=0)return isOffDay(n)?`<div class="${dcls(n)}"></div>`:`<div class="${dcls(n)} rate-r">∞</div>`;
     const r=l/c*100,k=r<=100?'g':r<=110?'y':r<=120?'o':'r';
     return `<div class="${dcls(n)} rate-${k}">${Math.round(r)}%</div>`};
   const loadV=(i,site)=>i==null?0:(site==='2P'?AGG.load2:site==='3P'?AGG.load3:AGG.load).get(i)||0;
   
+  const L1=st.load1||{bal:{},asm:{}},oneOpen=st.onePOpen!==false;
+  const l1v=(k,n)=>{const v=(L1[k]||{})[ds(n)];return v==null||v===''?null:+v};
+  const cap1=n=>{const v=(L1.cap||{})[ds(n)];return v!=null&&v!==''?+v:(isOffDay(n)?0:(st.capa1||0))};
+  if(oneOpen){
+    const inCell=(k,n)=>{const v=l1v(k,n);return `<div class="${dcls(n)}"><input class="l1-in" data-k="${k}" data-date="${ds(n)}" value="${v==null?'':v}" inputmode="decimal"></div>`};
+    h+=rowOf(lab('Man-day 소요 부하 · 1P 발란싱','(엑셀 붙여넣기 가능)'),n=>inCell('bal',n));
+    h+=rowOf(lab('Man-day 소요 부하 · 1P 조립시운전','(Total − 발란싱, 자동 계산)'),n=>{const T=l1v('tot',n);if(T==null)return `<div class="${dcls(n)}"></div>`;const v=Math.round((T-(l1v('bal',n)||0))*1000)/1000;return `<div class="${dcls(n)}"${v<0?' style="color:#c0322a;font-weight:700" title="Total보다 발란싱이 큽니다"':''}>${v===0?'':f1(v)}</div>`});
+    h+=rowOf(lab('Man-day 소요 부하 · 1P Total','(엑셀 붙여넣기 가능)'),n=>inCell('tot',n),'tot');
+    h+=rowOf(lab('보유 Man-day capa · 1P','(셀 수정·붙여넣기 가능)',`<span class="capa-max">Max <input id="capa1Max" type="number" step="0.5" min="0" value="${st.capa1||0}"><button class="btn sm" data-act="capa1Max" title="모든 일자에 1P Max 적용 (휴일은 0)">일괄 적용</button></span>`),n=>`<div class="${dcls(n)}"><input class="l1-in" data-k="cap" data-date="${ds(n)}" value="${cap1(n)}" inputmode="decimal"></div>`,'tot');
+    h+=rowOf(lab('부하율 · 1P','1P Total 소요÷capa×100 (%)',rateLg),n=>rateCell(n,l1v('tot',n)||0,cap1(n)),'tot');
+  }
   const SITES=[['2P','2P'],['3P','3P'],['T','Total']];
-  for(const [k,nm] of SITES)h+=rowOf(lab(`Man-day 소요 부하 · ${nm}`,k==='T'?'(2P+3P)':''),(n,i)=>{const v=loadV(i,k);return `<div class="${dcls(n)}">${i==null?'':(v>0?f1(v):'')}</div>`},k==='T'?'tot':'');
-  h+=rowOf(lab('보유 Man-day capa','(셀 수정 가능)',`<span class="capa-max">Max <input id="capaMax" type="number" step="0.5" min="0" value="${st.capa}"><button class="btn sm" data-act="capaMax" title="모든 일자에 Max 적용 (휴일은 0)">일괄 적용</button></span>`),(n,i)=>i==null?`<div class="${dcls(n)}"></div>`:`<div class="${dcls(n)}"><input class="capa-in" data-date="${ds(n)}" value="${capS(n)}" inputmode="decimal"></div>`,'tot');
+  for(const [k,nm] of SITES)h+=rowOf(lab(`Man-day 소요 부하 · ${nm}`,k==='T'?'(2P+3P)':'',k==='2P'?`<button class="btn sm" data-act="onep">1P 부하 ${oneOpen?'▲ 닫기':'▼ 열기'}</button>`:''),(n,i)=>{const v=loadV(i,k);return `<div class="${dcls(n)}">${i==null?'':(v>0?f1(v):'')}</div>`},k==='T'?'tot':'');
+  h+=rowOf(lab('보유 Man-day capa 2, 3P','(셀 수정 가능)',`<span class="capa-max">Max <input id="capaMax" type="number" step="0.5" min="0" value="${st.capa}"><button class="btn sm" data-act="capaMax" title="모든 일자에 Max 적용 (휴일은 0)">일괄 적용</button></span>`),(n,i)=>i==null?`<div class="${dcls(n)}"></div>`:`<div class="${dcls(n)}"><input class="capa-in" data-date="${ds(n)}" value="${capS(n)}" inputmode="decimal"></div>`,'tot');
   const tg=`<button class="btn sm" data-act="crane">크레인 부하 ${st.craneOpen?'▲ 닫기':'▼ 열기'}</button>`;
-  h+=rowOf(lab('부하율 · Total','Total 소요÷capa×100 (%)',tg),(n,i)=>i==null?`<div class="${dcls(n)}"></div>`:rateCell(n,loadV(i,'T'),capS(n)),'tot');
+  h+=rowOf(lab('부하율 · 2, 3P Total','Total 소요÷capa×100 (%)',rateLg+tg),(n,i)=>i==null?`<div class="${dcls(n)}"></div>`:rateCell(n,loadV(i,'T'),capS(n)),'tot');
   if(st.craneOpen){
     const cr=(label,map)=>rowOf(lab(label,'(보유 2기 · 3 이상 적색)'),(n,_h,i)=>{
       if(i==null)return `<div class="${dcls(n)}"></div>`;
@@ -574,7 +595,7 @@ function renderDash(){
   h+=`</div>`;
   // non-working stripes
   let nw='',run=null;
-  days.forEach((n,k)=>{const off=isOffDay(n);if(off&&run==null)run=k;if((!off||k===N-1)&&run!=null){const e=off?k+1:k;nw+=`<div class="nw" style="left:${run*COLW}px;width:${(e-run)*COLW}px"></div>`;run=null}});
+  days.forEach((n,k)=>{const off=isRestDay(n);if(off&&run==null)run=k;if((!off||k===N-1)&&run!=null){const e=off?k+1:k;nw+=`<div class="nw" style="left:${run*COLW}px;width:${(e-run)*COLW}px"></div>`;run=null}});
   const tdx=(today-gs)*COLW;const tdy=today>=gs&&today<gs+N?`<div class="tdy" style="left:${tdx}px"></div>`:'';
   const xS=t=>{const i=Math.floor(t+1e-9),f=t-i;return (wdDate(i)-gs)*COLW+f*COLW};
   const xE=t=>{const i=Math.ceil(t-1e-9)-1,j=Math.max(i,0);return (wdDate(j)-gs)*COLW+(t-j)*COLW};
@@ -607,7 +628,7 @@ function renderDash(){
         it.est?`※ 해당 조합 공수 없음 → ${it.from||'미입력(0)'} 값으로 임시 대체`:'',d.remark?`비고: ${d.remark}`:''].filter(Boolean).join('\n');
       h+=`<div class="${cls}" data-eq="${eq.id}" data-uid="${it.inst.uid}" style="left:${it._x}px;width:${it._w}px;top:${it._top}px;height:${it._h}px;${cc?`background-color:${cc};border-color:${darker(cc)};border-left-color:${d.site==='3P'?'#2b7a6a':'#2f6f9f'};color:${textOn(cc)}`:''}" title="${esc(tip)}">
         <button class="cx" data-act="cdel" title="공정 삭제">×</button><div class="c1" style="font-size:${it._fs||11.5}px">${esc(d.name)}${it.part?` <span class="part">${it.part[0]}/${it.part[1]}</span>`:''}</div>
-        <div class="c2">${d.witness==='O'?'<span class="pill w">입회</span>':''}<span class="pill ${d.site==='3P'?'p3':'p2'}">${d.site||'-'}</span><span class="lt">${f1(it.lt)}d</span>${it.crew===3?'<span class="pill">3인</span>':''}${it.ot?'<span class="pill ot">잔업</span>':''}${Object.keys(NIGHTOPT).filter(k=>eq.options.includes(k)&&((/시운전/.test(d.name)&&!/준비/.test(d.name))||d.opt1===k||d.opt2===k||d.opt3===k)).map(k=>`<span class="pill ngt" title="${NIGHTOPT[k][1]}">${NIGHTOPT[k][0]}</span>`).join('')}${isMove(d)&&d.dn==='O'?'<span class="pill dn">주간이동</span>':''}</div></div>`;
+        <div class="c2">${d.witness==='O'?'<span class="pill w">입회</span>':''}<span class="sl"><span class="pill ${d.site==='3P'?'p3':'p2'}">${d.site||'-'}</span><span class="lt">${cardLbl(it)}</span></span>${it.crew===3?'<span class="pill">3인</span>':''}${it.ot?'<span class="pill ot">잔업</span>':''}${Object.keys(NIGHTOPT).filter(k=>eq.options.includes(k)&&((/시운전/.test(d.name)&&!/준비/.test(d.name))||d.opt1===k||d.opt2===k||d.opt3===k)).map(k=>`<span class="pill ngt" title="${NIGHTOPT[k][1]}">${NIGHTOPT[k][0]}</span>`).join('')}${isMove(d)&&d.dn==='O'?'<span class="pill dn">주간이동</span>':''}</div></div>`;
     }
     h+=`</div></div>`;
   }
@@ -674,20 +695,25 @@ function openDay(date){
   const n=dn(date),st=dayState(n),def=dayDefault(n);
   openModal(`<div class="mhead">${date} (${WK[dow(n)]}) 근무 설정</div><div class="mbody">
     <div class="note">기본값: ${def?'근무일':'휴무일 (주말/휴일 설정)'} · 현재: ${st.ov?'<b>직접 설정됨</b>':'기본값'}</div>
-    <label class="ck"><input type="checkbox" id="d_off"${!st.hp&&!st.ext?' checked':''}> <b>휴무일</b> (HP·협력업체 모두 작업 없음)</label>
-    <label class="ck"><input type="checkbox" id="d_hp"${st.hp?' checked':''}> HP 작업 가능 <span class="note">(사내 인원 작업·Man-day 부하/capa 반영)</span></label>
-    <label class="ck"><input type="checkbox" id="d_ex"${st.ext?' checked':''}> 협력업체 작업 가능</label>
+    <div class="dtype">
+      <label class="ck"><input type="radio" name="d_type" id="d_work" value="work"${st.hp&&st.ext&&!st.off?' checked':''}> <b>정상근무일</b> <span class="note">(HP·협력업체 모두 정상 작업)</span></label>
+      <label class="ck"><input type="radio" name="d_type" id="d_off" value="off"${st.hp&&st.ext&&!st.off?'':' checked'}> <b>휴무일</b> <span class="note">(공휴일·주말 등 — 근무하는 업체만 아래에서 선택)</span></label>
+      <div class="dsub2">
+        <label class="ck"><input type="checkbox" id="d_hp"${(st.off||!(st.hp&&st.ext))&&st.hp?' checked':''}> HP 작업 가능 <span class="note">(휴무일 근무: 사내 인원 작업·Man-day 부하/capa 반영)</span></label>
+        <label class="ck"><input type="checkbox" id="d_ex"${(st.off||!(st.hp&&st.ext))&&st.ext?' checked':''}> 협력업체 작업 가능</label>
+      </div>
+    </div>
     <label class="fl">비고 <span class="note">(날짜 머리글의 요일 아래에 표시)</span><input id="d_note" value="${esc((S.settings.dayNote||{})[date]||'')}" placeholder="예) 특근, 설비점검"></label>
-    <div class="note">휴무인 날은 해당 작업자의 공정이 진행되지 않고, 이후 일정으로 순연됩니다. 주말을 근무일로 바꿀 수도 있습니다.</div>
+    <div class="note">휴무일에는 체크하지 않은 작업자의 공정이 진행되지 않고 이후 일정으로 순연됩니다. 휴무일이라도 HP 작업 가능을 체크하면 그날 HP 공정·Man-day 부하·capa 설정이 가능합니다. (HP·협력업체를 모두 체크해도 휴무일로 표시되며, 정상근무일로 자동 변경되지 않습니다)</div>
   </div><div class="mfoot"><button class="btn" id="d_def" style="margin-right:auto">기본값으로</button><button class="btn" id="d_stat">📋 일일작업현황</button><button class="btn" id="d_cancel">취소</button><button class="btn pri" id="d_save">저장</button></div>`,true);
-  const off=$('#d_off'),hp=$('#d_hp'),ex=$('#d_ex');
-  off.onchange=()=>{if(off.checked){hp.checked=false;ex.checked=false}else{hp.checked=true;ex.checked=true}};
-  hp.onchange=ex.onchange=()=>{off.checked=!hp.checked&&!ex.checked};
+  const wk=$('#d_work'),off=$('#d_off'),hp=$('#d_hp'),ex=$('#d_ex');
+  const sync=()=>{const o=off.checked;hp.disabled=ex.disabled=!o;$('.dsub2').style.opacity=o?1:.45};
+  wk.onchange=off.onchange=sync;sync();
   $('#d_cancel').onclick=closeModal;
   $('#d_stat').onclick=()=>openDayStatus(date);
   const apply=ov=>{const o=S.settings.dayOv||(S.settings.dayOv={});if(ov)o[date]=ov;else delete o[date];const nt=$('#d_note').value.trim(),nn=S.settings.dayNote||(S.settings.dayNote={});if(nt)nn[date]=nt;else delete nn[date];rebuildCal();save();closeModal();render()};
   $('#d_def').onclick=()=>apply(null);
-  $('#d_save').onclick=()=>{const v={hp:hp.checked,ext:ex.checked};apply(v.hp===def&&v.ext===def?null:v)};
+  $('#d_save').onclick=()=>{if(wk.checked){apply(def?null:{hp:true,ext:true});return}const v={hp:hp.checked,ext:ex.checked,off:true};apply(!v.hp&&!v.ext&&!def?null:v)};
 }
 const eqKey=e=>(e.title||'').trim()+'\u0001'+(e.code||'').trim();
 const GROUPCOL=['#F4B183','#E2F0D9','#FFE699','#B4C7E7'];let GCOL=new Map();
@@ -909,12 +935,17 @@ function openAddProc(eqId){
 }
 
 /* settings */
+function adjDate(str,dm,dd){const [y,m,d]=str.split('-').map(Number);let Y=y,M=m-1+dm;Y+=Math.floor(M/12);M=((M%12)+12)%12;const last=new Date(Date.UTC(Y,M+1,0)).getUTCDate();const x=new Date(Date.UTC(Y,M,Math.min(d,last)+dd));return x.toISOString().slice(0,10)}
+const adjGs=id=>`<div class="adj">${[['-1m',-1,0],['+1m',1,0],['-7d',0,-7],['+7d',0,7],['-1d',0,-1],['+1d',0,1]].map(([l,m,d])=>`<button type="button" class="btn sm" data-adjd="${id}" data-m="${m}" data-d="${d}">${l}</button>`).join('')}</div>`;
+const adjDays=id=>`<div class="adj">${[-10,10].map(n=>`<button type="button" class="btn sm" data-adjn="${id}" data-n="${n}">${n>0?'+':''}${n}</button>`).join('')}</div>`;
+function wireAdj(){$$('#modalRoot [data-adjd]').forEach(b=>b.onclick=()=>{const i=$(b.dataset.adjd);if(i.value)i.value=adjDate(i.value,+b.dataset.m,+b.dataset.d)});
+  $$('#modalRoot [data-adjn]').forEach(b=>b.onclick=()=>{const i=$(b.dataset.adjn);i.value=Math.min(400,Math.max(14,(+i.value||120)+(+b.dataset.n)))})}
 function openSettings(){
   if(RO)return openViewSettings();
   const s=S.settings;
   openModal(`<div class="mhead">설정</div><div class="mbody"><div class="g2">
-    <label class="fl">대시보드 시작일<input id="s_gs" type="date" value="${s.gridStart}"></label>
-    <label class="fl">표시 일수 (달력일)<input id="s_days" type="number" min="14" max="400" value="${s.days}"></label>
+    <div><label class="fl">대시보드 시작일<input id="s_gs" type="date" value="${s.gridStart}"></label>${adjGs('#s_gs')}</div>
+    <div><label class="fl">표시 일수 (달력일)<input id="s_days" type="number" min="14" max="400" value="${s.days}"></label>${adjDays('#s_days')}</div>
     <label class="fl">기본 일일 capa (Man-day, Total)<input id="s_capa" type="number" step="0.5" min="0" value="${s.capa}"></label>
     <label class="fl">기본 조 인원<select id="s_crew"><option value="2"${s.crew==2?' selected':''}>2인 1조</option><option value="3"${s.crew==3?' selected':''}>3인 1조</option></select></label>
   </div>
@@ -922,7 +953,7 @@ function openSettings(){
   <label class="fl">휴일 목록 (한 줄에 하나, YYYY-MM-DD) <span class="note">공휴일·휴무일은 직접 확인 후 수정하세요</span><textarea id="s_hol" rows="5">${esc(s.holidays.join('\n'))}</textarea></label>
   <div class="note">셀별 capa 개별 수정 내용은 유지됩니다. <button class="btn sm" id="s_clr">개별 capa 초기화</button></div>
   </div><div class="mfoot"><button class="btn dng" id="s_reset" style="margin-right:auto">전체 초기화(샘플 포함)</button><button class="btn" id="s_cancel">취소</button><button class="btn pri" id="s_save">저장</button></div>`,true);
-  $('#s_cancel').onclick=closeModal;
+  $('#s_cancel').onclick=closeModal;wireAdj();
   $('#s_clr').onclick=()=>{s.capaOv={};save();toast('개별 capa를 초기화했습니다')};
   $('#s_reset').onclick=()=>{if(confirm('모든 장비·공정·공수 수정 내용이 사라지고 엑셀 원본 값으로 돌아갑니다. 계속할까요?')){S=defaults();addSamples();buildCal();save();closeModal();render()}};
   $('#s_save').onclick=()=>{
@@ -1065,6 +1096,9 @@ $('#fileImp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new Fi
 
 const view=$('#view');
 view.addEventListener('click',e=>{
+  const c1=e.target.closest('[data-act=capa1Max]');
+  if(c1){const v=parseFloat($('#capa1Max').value);if(isNaN(v)||v<0){alert('Max 값을 0 이상의 숫자로 입력하세요.');return}
+    S.settings.capa1=v;if(S.settings.load1)S.settings.load1.cap={};save();render();toast(`모든 일자에 1P capa ${v} 적용 (휴일은 0)`);return}
   const cm=e.target.closest('[data-act=capaMax]');
   if(cm){const v=parseFloat($('#capaMax').value);if(isNaN(v)||v<0){alert('Max 값을 0 이상의 숫자로 입력하세요.');return}
     S.settings.capa=v;S.settings.capaOv={};save();render();toast(`모든 일자에 capa ${v} 적용 (휴일은 0)`);return}
@@ -1080,7 +1114,8 @@ view.addEventListener('click',e=>{
   const pk=e.target.closest('[data-act=pick]');if(pk){openPalette(pk,+pk.closest('tr').dataset.i);return}
   const b=e.target.closest('[data-act]');if(!b)return;
   const a=b.dataset.act,id=b.dataset.eq;
-  if(a==='crane'){S.settings.craneOpen=!S.settings.craneOpen;save();render()}
+  if(a==='onep'){S.settings.onePOpen=!(S.settings.onePOpen!==false);save();render()}
+  else if(a==='crane'){S.settings.craneOpen=!S.settings.craneOpen;save();render()}
   else if(a==='mup'||a==='mdn'){const vis=S.equipments.filter(e=>!e.hidden&&!e.done),i=vis.findIndex(e=>e.id===id),j=a==='mup'?i-1:i+1;
     if(i>=0&&j>=0&&j<vis.length){const A=S.equipments.indexOf(vis[i]),B=S.equipments.indexOf(vis[j]);[S.equipments[A],S.equipments[B]]=[S.equipments[B],S.equipments[A]];save();render()}}
   else if(a==='done'){const eq=S.equipments.find(x=>x.id===id);eq.done=true;eq.doneDate=ds(Math.floor(Date.now()/DAY+9/24));save();render();toast(`'${eq.title}' 생산완료 처리 — '완료장비' 탭에서 확인하세요`)}
@@ -1120,8 +1155,20 @@ view.addEventListener('click',e=>{
   else if(a==='stdreset'){if(confirm('표준공수를 엑셀 원본 값으로 모두 되돌립니다. (↶ 되돌리기 가능)')){S.master.manday=seedManday();S.master.seedVer=SEED.version;masterChanged();renderStd();toast('엑셀 기준값으로 초기화했습니다')}}
   else if(a==='stdcopy'){let n=0;for(const p of S.master.processes){const t=S.master.manday[p.id]||(S.master.manday[p.id]={});for(const m of MODELS)for(const s of STAGES){const k=`${ui.stdCat}|${m}|${s}`,ka=`AIR|${m}|${s}`;if(t[k]==null&&t[ka]!=null){t[k]=t[ka];n++}}}save();renderStd();toast(`${n}개 칸을 복사했습니다`)}
 });
+function setL1(k,date,raw){const L=S.settings.load1||(S.settings.load1={bal:{},asm:{}});const m=L[k]||(L[k]={});const v=String(raw).replace(/,/g,'').trim();if(v===''){delete m[date];return}const x=Number(v);if(isNaN(x))return;m[date]=Math.round(x*1000)/1000}
+view.addEventListener('paste',e=>{
+  const t=e.target;if(RO||!t.classList||!t.classList.contains('l1-in'))return;
+  const txt=(e.clipboardData||window.clipboardData).getData('text');
+  if(!/[\t\n]/.test(txt.trim()))return; // 단일 값은 기본 붙여넣기 → change 이벤트로 처리
+  e.preventDefault();
+  const rows=txt.replace(/\r/g,'').replace(/\n+$/,'').split('\n').map(r=>r.split('\t'));
+  const keys=['bal',null,'tot','cap'],k0=keys.indexOf(t.dataset.k),n0=dn(t.dataset.date);let cnt=0;
+  rows.forEach((r,ri)=>{const k=keys[k0+ri];if(!k)return;r.forEach((c,ci)=>{setL1(k,ds(n0+ci),c);cnt++})});
+  save();render();toast(`${cnt}개 셀을 붙여넣었습니다 (선택한 칸부터 오른쪽 날짜로, 아래 행은 다음 행으로)`);
+});
 view.addEventListener('change',e=>{
   const t=e.target;
+  if(t.classList.contains('l1-in')){setL1(t.dataset.k,t.dataset.date,t.value);save();render();return}
   if(t.classList.contains('capa-in')){const v=t.value.trim(),kk=t.dataset.date;if(v===''||isNaN(+v))delete S.settings.capaOv[kk];else S.settings.capaOv[kk]=+v;save();render();return}
   if(t.dataset.eq&&t.dataset.f){const eq=S.equipments.find(x=>x.id===t.dataset.eq);eq[t.dataset.f]=t.dataset.f==='stage'?+t.value:t.value;save();render();return}
   if(ui.tab==='opt'&&t.classList.contains('oname')){
@@ -1333,7 +1380,7 @@ function exportXlsx(){
   const loadM=k=>k==='2P'?AGG.load2:k==='3P'?AGG.load3:AGG.load;
   for(const k of ['2P','3P','Total'])rows.push([...lab(`Man-day 소요 부하 · ${k}`,k==='Total'?XS.tot:XS.bold),...days.map(n=>{const i0=WDI.get(n),i=i0!=null&&HPA[i0]?i0:null;if(i==null)return{v:'',s:XS.off};const v=Math.round((loadM(k).get(i)||0)*100)/100;return{v:v||'',s:k==='Total'?XS.tot:XS.num}})]);
   rows.push([...lab('보유 Man-day capa · Total',XS.tot),...days.map(n=>{const i=WDI.get(n);return i==null||!HPA[i]?{v:'',s:XS.off}:{v:capS(n),s:XS.tot}})]);
-  rows.push([...lab('부하율 · Total',XS.bold),...days.map(n=>{
+  rows.push([...lab('부하율 · 2, 3P Total',XS.bold),...days.map(n=>{
     const i=WDI.get(n);if(i==null||!HPA[i])return{v:'',s:XS.off};const l=AGG.load.get(i)||0,c=capS(n);
     if(l<=0)return{v:'',s:XS.def};if(c<=0)return{v:'∞',s:XS.r};const r=l/c;return{v:Math.round(r*1000)/1000,s:r*100<=100?XS.g:r*100<=110?XS.y:r*100<=120?XS.o:XS.r}})]);
   const cr=(t,map)=>rows.push([...lab(t,XS.bold),...days.map(n=>{const i=WDI.get(n);if(i==null)return{v:'',s:XS.off};const v=Math.round((map.get(i)||0)*10)/10;return{v:v||'',s:v>=3?XS.crane:XS.num}})]);
@@ -1374,16 +1421,16 @@ const DATA_FILE='plan_data.js';
 const buildDataJs=()=>'window.PLAN_DATA='+JSON.stringify({savedAt:new Date().toISOString(),state:S})+';';
 const hhmmss=()=>new Date().toLocaleTimeString('ko-KR',{hour12:false});
 const VPK='compressorPlanViewPrefs_v1';
-function saveVP(){try{localStorage.setItem(VPK,JSON.stringify({craneOpen:S.settings.craneOpen,gridStart:S.settings.gridStart,days:S.settings.days}))}catch(e){}}
+function saveVP(){try{localStorage.setItem(VPK,JSON.stringify({craneOpen:S.settings.craneOpen,onePOpen:S.settings.onePOpen,gridStart:S.settings.gridStart,days:S.settings.days}))}catch(e){}}
 function applyVP(st){try{const v=JSON.parse(localStorage.getItem(VPK)||'null');if(v)Object.assign(st.settings,v)}catch(e){}}
 function openViewSettings(){
   const s=S.settings;
   openModal(`<div class="mhead">화면 설정 (열람 전용)</div><div class="mbody"><div class="g2">
-    <label class="fl">대시보드 시작일<input id="v_gs" type="date" value="${s.gridStart}"></label>
-    <label class="fl">표시 일수 (달력일)<input id="v_days" type="number" min="14" max="400" value="${s.days}"></label></div>
+    <div><label class="fl">대시보드 시작일<input id="v_gs" type="date" value="${s.gridStart}"></label>${adjGs('#v_gs')}</div>
+    <div><label class="fl">표시 일수 (달력일)<input id="v_days" type="number" min="14" max="400" value="${s.days}"></label>${adjDays('#v_days')}</div></div>
     <div class="note">이 설정은 이 PC의 화면에만 적용되며 편집용 파일의 데이터에는 영향이 없습니다.</div></div>
     <div class="mfoot"><button class="btn" id="v_c">취소</button><button class="btn pri" id="v_s">적용</button></div>`,true);
-  $('#v_c').onclick=closeModal;
+  $('#v_c').onclick=closeModal;wireAdj();
   $('#v_s').onclick=()=>{s.gridStart=$('#v_gs').value||s.gridStart;s.days=Math.min(400,Math.max(14,+$('#v_days').value||120));saveVP();closeModal();render()};
 }
 if(RO){
