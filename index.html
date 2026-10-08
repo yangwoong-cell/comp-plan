@@ -1428,8 +1428,8 @@ const DATA_FILE='plan_data.js';
 const buildDataJs=()=>'window.PLAN_DATA='+JSON.stringify({savedAt:new Date().toISOString(),state:S})+';';
 const hhmmss=()=>new Date().toLocaleTimeString('ko-KR',{hour12:false});
 const VPK='compressorPlanViewPrefs_v1';
-function saveVP(){try{localStorage.setItem(VPK,JSON.stringify({craneOpen:S.settings.craneOpen,onePOpen:S.settings.onePOpen,gridStart:S.settings.gridStart,days:S.settings.days}))}catch(e){}}
-function applyVP(st){try{const v=JSON.parse(localStorage.getItem(VPK)||'null');if(v)Object.assign(st.settings,v)}catch(e){}}
+function saveVP(){try{localStorage.setItem(VPK,JSON.stringify({craneOpen:S.settings.craneOpen,onePOpen:S.settings.onePOpen}))}catch(e){}}
+function applyVP(st){try{const v=JSON.parse(localStorage.getItem(VPK)||'null');if(v){delete v.gridStart;delete v.days;Object.assign(st.settings,v)}}catch(e){}}
 function openViewSettings(){
   const s=S.settings;
   openModal(`<div class="mhead">화면 설정 (열람 전용)</div><div class="mbody"><div class="g2">
