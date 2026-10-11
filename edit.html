@@ -83,6 +83,7 @@ input,select,textarea{font:inherit;color:inherit}
 .erow .left .lc:not(:first-child) .fld{text-align:center;text-align-last:center}
 .erow input.fld:focus,.erow select.fld:focus{outline:2px solid #8db5e0;background:#fff}
 .eact{display:flex;gap:3px;flex-wrap:wrap}
+.vsec{margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:8px;background:#faf8f3;display:grid;gap:8px}.vsec input{padding:7px 9px;border:1px solid var(--line);border-radius:6px;width:100%}.vrow{display:flex;gap:8px;align-items:center}
 .eact .btn.on{background:#e8590c;color:#fff;border-color:#e8590c}
 .tbdb{font-size:10px;font-weight:700;color:#b34700;background:#fff1e6;border:1px dashed #e8590c;border-radius:4px;padding:0 5px;line-height:15px;white-space:nowrap}
 .card.tbd{border-style:dashed;opacity:.62;background-image:repeating-linear-gradient(45deg,rgba(0,0,0,.09) 0 5px,transparent 5px 10px)}
@@ -962,9 +963,37 @@ function openSettings(){
   <label class="ck"><input type="checkbox" id="s_we"${s.skipWeekend?' checked':''}> 주말은 비근무일 (공정 일정·capa 제외)</label>
   <label class="fl">휴일 목록 (한 줄에 하나, YYYY-MM-DD) <span class="note">공휴일·휴무일은 직접 확인 후 수정하세요</span><textarea id="s_hol" rows="5">${esc(s.holidays.join('\n'))}</textarea></label>
   <div class="note">셀별 capa 개별 수정 내용은 유지됩니다. <button class="btn sm" id="s_clr">개별 capa 초기화</button></div>
+  ${CLOUD&&fbSecret?`<div class="vsec"><b>🔐 열람용 접속 비밀번호</b> <span class="note">현재: <b id="vp_state">${VPW?'설정됨 (열람 시 비밀번호 입력 필요)':'미설정 (누구나 열람 가능)'}</b></span>
+    <div class="note">설정하면 열람용 페이지의 <b>공정·옵션·표준공수 탭</b>을 보려면 비밀번호를 입력해야 합니다. (대시보드·완료장비는 비밀번호 없이 열람) 해당 마스터 데이터는 암호화되어 저장됩니다.</div>
+    <div class="g2"><input type="password" id="vp_1" placeholder="새 열람 비밀번호 (6자 이상)" autocomplete="new-password"><input type="password" id="vp_2" placeholder="비밀번호 확인" autocomplete="new-password"></div>
+    <div class="vrow"><button class="btn sm pri" id="vp_set">${VPW?'비밀번호 변경':'비밀번호 설정'}</button>${VPW?'<button class="btn sm dng" id="vp_clr">비밀번호 해제</button>':''}<span class="note" id="vp_msg"></span></div></div>`:''}
   </div><div class="mfoot"><button class="btn dng" id="s_reset" style="margin-right:auto">전체 초기화(샘플 포함)</button><button class="btn" id="s_cancel">취소</button><button class="btn pri" id="s_save">저장</button></div>`,true);
   $('#s_cancel').onclick=closeModal;wireAdj();
   $('#s_clr').onclick=()=>{s.capaOv={};save();toast('개별 capa를 초기화했습니다')};
+  if($('#vp_set')){
+    const msg=t=>{$('#vp_msg').textContent=t};
+    const isPublic=async()=>{try{const r=await fetch(`https://firestore.googleapis.com/v1/projects/${FBC.projectId}/databases/(default)/documents/plan/secret`);if(r.status===200||r.status===404)return true;if(r.status===401||r.status===403)return false;return null}catch(e){return null}};
+    $('#vp_set').onclick=async()=>{
+      const a=$('#vp_1').value,b=$('#vp_2').value;
+      if(a.length<6){msg('6자 이상 입력하세요');return}if(a!==b){msg('비밀번호 확인이 일치하지 않습니다');return}
+      if(!cloudReady){msg('클라우드에 연결된 상태에서만 설정할 수 있습니다');return}
+      $('#vp_set').disabled=true;msg('설정 중…');
+      try{
+        await fbSecret.set({pw:a});
+        const pub=await isPublic();
+        if(pub===true){try{await fbSecret.delete()}catch(e){}msg('');alert('Firestore 규칙이 아직 갱신되지 않아 비밀번호가 외부에 노출될 수 있어 설정을 취소했습니다.\n설정 가이드의 「열람 비밀번호용 규칙」을 Firebase 콘솔 > Firestore > 규칙에 적용한 뒤 다시 시도하세요.');$('#vp_set').disabled=false;return}
+        if(pub===null&&!confirm('Firestore 규칙 적용 여부를 자동 확인하지 못했습니다.\n설정 가이드의 규칙(plan/secret은 편집자만 읽기)을 이미 적용했나요?'))
+          {try{await fbSecret.delete()}catch(e){}$('#vp_set').disabled=false;msg('');return}
+        VPW=a;VSALT=b64(crypto.getRandomValues(new Uint8Array(16)));
+        await cloudPush();
+        closeModal();toast('열람 비밀번호를 설정했습니다. 열람용의 공정·옵션·표준공수 탭은 이제 비밀번호가 필요합니다');
+      }catch(e){msg('');$('#vp_set').disabled=false;alert('설정 실패: '+(e.code||e.message)+(e.code==='permission-denied'?'\n설정 가이드의 Firestore 규칙(plan/secret)을 먼저 적용하세요.':''))}
+    };
+    if($('#vp_clr'))$('#vp_clr').onclick=async()=>{
+      if(!confirm('열람 비밀번호를 해제하면 공정·옵션·표준공수 탭도 누구나 볼 수 있습니다. 계속할까요?'))return;
+      try{VPW=null;VSALT=null;await cloudPush();try{await fbSecret.delete()}catch(e){}closeModal();toast('열람 비밀번호를 해제했습니다')}catch(e){alert('해제 실패: '+(e.code||e.message))}
+    };
+  }
   $('#s_reset').onclick=()=>{if(confirm('모든 장비·공정·공수 수정 내용이 사라지고 엑셀 원본 값으로 돌아갑니다. 계속할까요?')){S=defaults();addSamples();buildCal();save();closeModal();render()}};
   $('#s_save').onclick=()=>{
     s.gridStart=$('#s_gs').value||s.gridStart;s.days=Math.min(400,Math.max(14,+$('#s_days').value||120));
@@ -1075,13 +1104,22 @@ $('#wkSave').onclick=()=>{const v=$('#wkIn').value.trim();
   if(v&&!/^\d{6}$/.test(v)){alert("날짜 6자리(YYMMDD)로 입력하세요. 예: 261001");return}
   S.settings.wkPlan=v;save();updWk();toast(v?`주간생산계획 '${v}' 기준으로 저장했습니다`:'주간생산계획 기준을 지웠습니다')};
 $('#wkIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#wkSave').click()});
+function renderLock(){
+  $('#view').innerHTML=`<div class="pane"><form class="lgbox" id="vgForm" style="margin:60px auto"><h2>🔒 대외비 — 공정 · 옵션 · 표준공수</h2><div style="font-size:13px;color:var(--ink2)">열람이 허가된 인원만 볼 수 있는 탭입니다. 열람 비밀번호를 입력하세요.<br>(대시보드와 완료장비는 비밀번호 없이 볼 수 있습니다)</div>
+    <input type="password" id="vgPw" placeholder="열람 비밀번호" autocomplete="current-password">
+    <label class="ck"><input type="checkbox" id="vgKeep"${localStorage.getItem('planViewPwKeep')?' checked':''}> 이 기기에서 비밀번호 기억 (공용 PC에서는 해제)</label>
+    <div class="err" id="vgErr"></div><button class="btn pri" id="vgGo" type="submit" style="justify-content:center;padding:9px">확인</button></form></div>`;
+  $('#vgForm').onsubmit=async ev=>{ev.preventDefault();const p=$('#vgPw').value;if(!p)return;$('#vgGo').disabled=true;const ok=viewUnlockFn?await viewUnlockFn(p,$('#vgKeep').checked):false;if(!ok){$('#vgErr').textContent='비밀번호가 올바르지 않습니다.';$('#vgGo').disabled=false}};
+  setTimeout(()=>{const x=$('#vgPw');x&&x.focus()},50);
+}
 function render(){
   syncOpts();
   $$('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===ui.tab));
-  if(ui.tab==='dash')renderDash();else if(ui.tab==='proc')renderProc();else if(ui.tab==='opt')renderOpt();else if(ui.tab==='done')renderDone();else renderStd();
+  if(RO&&VLOCK&&['proc','opt','std'].includes(ui.tab))renderLock();
+  else if(ui.tab==='dash')renderDash();else if(ui.tab==='proc')renderProc();else if(ui.tab==='opt')renderOpt();else if(ui.tab==='done')renderDone();else renderStd();
   fixBar();updWk();
   const hc=S.equipments.filter(e=>e.hidden&&!e.done).length;$('#doneCnt').textContent=(()=>{const n=S.equipments.filter(e=>e.done).length;return n?`(${n})`:''})();$('#hidCnt').textContent=hc?`(${hc})`:'';
-  if(RO)$$('#view input,#view select').forEach(x=>x.disabled=true);
+  if(RO)$$('#view input:not(#vgPw):not(#vgKeep),#view select').forEach(x=>x.disabled=true);
 }
 $$('.tab').forEach(t=>t.onclick=()=>{ui.tab=t.dataset.tab;render()});
 $('#btnAdd').onclick=()=>openEquip();
@@ -1408,9 +1446,9 @@ function exportXlsx(){
       const act=items.filter(it=>availIdx(it.d.owner||'HP',i)&&Math.min(it.e,i+1)-Math.max(it.s,i)>0.01);
       if(!act.length){row.push({v:'',s:XS.def});continue}
       maxn=Math.max(maxn,act.length);
-      row.push({v:act.map(a=>a.d.name+(a.d.witness==='O'?'(입회)':'')).join('\n'),s:colorXf(cardColor(act[0].d)||SITECOL[act[0].d.site==='3P'?'3P':'2P'])});
+      row.push({v:act.map(a=>a.d.name+(a.d.witness==='O'?'(입회)':'')+'\n('+(a.d.site==='3P'?'3P':'2P')+')').join('\n'),s:colorXf(cardColor(act[0].d)||SITECOL[act[0].d.site==='3P'?'3P':'2P'])});
     }
-    rows.push(row);hts[rows.length-1]=Math.max(30,maxn*14+6);
+    rows.push(row);hts[rows.length-1]=Math.max(30,maxn*28+6);
     items.forEach((it,k)=>{const d=it.d;detail.push([eq.title,eq.code||'',eq.cat,eq.model,eq.stage+'단',eq.unit||'',k+1,d.name,(d.type||'추가')+(it.inst.added?'(추가)':''),d.site||'',d.witness==='O'?'O':'X',d.owner||'HP',d.noMan==='X'?'불필요':'필요',it.crew,Math.round(it.md*100)/100,Math.round(it.md/HPD*100)/100,Math.round(it.lt*100)/100,ds(wdDate(Math.floor(it.s+1e-9))),ds(wdDate(Math.max(Math.ceil(it.e-1e-9)-1,0))),d.remark||''].map((v,ci)=>({v,s:typeof v==='number'?XS.num:(ci===7||ci===19?XS.left:XS.ctr)})))});
   }
   rows.push([]);rows.push([{v:`※ ${ds(Math.floor(Date.now()/DAY+9/24))} 출력 · 셀 색: 공정 배경색(미지정 시 파랑=2P, 청록=3P) · 공수 8h=1 man-day`,s:XS.left}]);
@@ -1507,6 +1545,34 @@ const CLIENT=Math.random().toString(36).slice(2,10);
 var fbDoc=null,fbAuth=null,cloudAt=null,cloudTimer=null,cloudReady=false,cloudBusy=false,cloudPend=false,cloudWarned=false;
 if(CLOUD){try{firebase.initializeApp(FBC);fbDoc=firebase.firestore().doc('plan/main');if(!RO)fbAuth=firebase.auth()}catch(e){console.error(e)}}
 const cstat=t=>{$('#shareStat').textContent=t};
+/* ---- 열람 비밀번호: 데이터를 AES-GCM으로 암호화해 저장 (비밀번호 없이는 내용을 읽을 수 없음) ---- */
+const b64=u=>{let s='';const a=new Uint8Array(u);for(let i=0;i<a.length;i+=0x8000)s+=String.fromCharCode.apply(null,a.subarray(i,i+0x8000));return btoa(s)};
+const unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const KC=new Map();
+async function keyFor(pw,salt){const k=pw+'|'+salt;if(!KC.has(k)){KC.clear();const m=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);KC.set(k,await crypto.subtle.deriveKey({name:'PBKDF2',salt:unb64(salt),iterations:150000,hash:'SHA-256'},m,{name:'AES-GCM',length:256},false,['encrypt','decrypt']))}return KC.get(k)}
+const pipeBytes=async(bytes,ts)=>new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(ts)).arrayBuffer());
+async function encJson(json,pw,salt){const key=await keyFor(pw,salt);let raw=new TextEncoder().encode(json),z=0;if(window.CompressionStream){raw=await pipeBytes(raw,new CompressionStream('gzip'));z=1}const iv=crypto.getRandomValues(new Uint8Array(12));const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,raw);return{v:1,z,salt,iv:b64(iv),ct:b64(ct)}}
+async function decJson(enc,pw){const key=await keyFor(pw,enc.salt);let raw=new Uint8Array(await crypto.subtle.decrypt({name:'AES-GCM',iv:unb64(enc.iv)},key,unb64(enc.ct)));if(enc.z)raw=await pipeBytes(raw,new DecompressionStream('gzip'));return new TextDecoder().decode(raw)}
+/* 열람용 공개본: 장비 일정에 실제로 쓰이는 공정·표준공수·옵션만 남기고 나머지 마스터(공정 정의·표준공수 표·옵션 목록)는 제외 */
+function pubState(){
+  const o=JSON.parse(JSON.stringify(S)),M=S.master,used=new Set(),opts=new Set(),md={};
+  const need=(t,cat,model,stage)=>{ // stdMd()가 참조하는 키만 선택
+    const has=k=>t[k]!=null&&t[k]!==''&&t[k]!=='NA',k=`${cat}|${model}|${stage}`;
+    if(t[k]==='NA'||has(k))return [k];
+    const mi=MODELS.indexOf(model),order=MODELS.map((m,i)=>[m,Math.abs(i-mi)]).sort((a,b)=>a[1]-b[1]);
+    for(const c of (cat==='AIR'?['AIR']:[cat,'AIR']))for(const [m] of order){const kk=`${c}|${m}|${stage}`;if(has(kk))return [kk]}
+    return [];
+  };
+  for(const eq of o.equipments){for(const i of eq.procs||[])if(i.pid)used.add(i.pid);for(const x of eq.options||[])opts.add(x)}
+  for(const eq of o.equipments)for(const pid of used){const t=M.manday[pid]||{};for(const k of need(t,eq.cat,eq.model,eq.stage)){if(t[k]!=null){(md[pid]||(md[pid]={}))[k]=t[k]}}}
+  o.master.processes=M.processes.filter(p=>used.has(p.id));
+  o.master.manday=md;o.master.options=(M.options||[]).filter(x=>opts.has(x));
+  return JSON.stringify(o);
+}
+var VPW=null,VSALT=null,fbSecret=null,VLOCK=false,viewUnlockFn=null; // 편집용: 현재 열람 비밀번호/솔트(비밀번호는 편집자만 읽을 수 있는 plan/secret 문서에 보관)
+if(CLOUD&&!RO&&fbDoc){try{fbSecret=firebase.firestore().doc('plan/secret')}catch(e){}}
+async function docJson(d){if(!d.enc)return d.json;if(!VPW)throw new Error('no-pw');return decJson(d.enc,VPW)}
+async function refreshVpw(){try{const sg=await fbSecret.get();VPW=sg.exists?sg.data().pw:null}catch(e){}}
 async function cloudPush(){
   if(!CLOUD||RO||!cloudReady)return;
   if(cloudBusy){cloudPend=true;return}
@@ -1515,7 +1581,8 @@ async function cloudPush(){
     const json=JSON.stringify(S);
     if(json.length>900000&&!cloudWarned){cloudWarned=true;alert('저장 데이터가 커서 클라우드 한도(약 1MB)에 가까워졌습니다. 불필요한 완료 장비를 정리해 주세요.')}
     const at=new Date().toISOString();cloudAt=at;
-    await fbDoc.set({savedAt:at,by:CLIENT,json});
+    const doc=VPW&&VSALT?{savedAt:at,by:CLIENT,json:pubState(),enc:await encJson(json,VPW,VSALT)}:{savedAt:at,by:CLIENT,json};
+    await fbDoc.set(doc);
     cstat(`☁ 클라우드 저장됨 ${hhmmss()}`);
   }catch(err){cstat('⚠ 클라우드 저장 실패: '+(err&&(err.code||err.message)||err)+' — 로그인이 만료되었으면 새로고침 후 다시 로그인하세요')}
   cloudBusy=false;if(cloudPend){cloudPend=false;cloudPush()}
@@ -1587,12 +1654,27 @@ if(RO){
   S=defaults();applyVP(S);buildCal();render();
   if(CLOUD&&fbDoc){
     cstat('☁ 연결 중…');
+    let VD=null,vpw=sessionStorage.getItem('planViewPw')||localStorage.getItem('planViewPwKeep')||'';
+    const viewApply=async force=>{
+      const d=VD;if(!d)return;okAt=hhmmss();
+      if(d.savedAt!==lastSaved||force){
+        let json=d.json,full=!d.enc;
+        if(d.enc&&vpw){try{json=await decJson(d.enc,vpw);full=true}catch(e){sessionStorage.removeItem('planViewPw');localStorage.removeItem('planViewPwKeep');vpw=''}}
+        VLOCK=!full;
+        try{S=JSON.parse(json);migrate(S);applyVP(S);buildCal();render();lastSaved=d.savedAt}catch(e){cstat('⚠ 데이터를 읽지 못했습니다');return}
+      }
+      cstat(`☁ 실시간 연결 · 최종 편집 저장 ${new Date(d.savedAt).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false})}`);
+    };
+    viewUnlockFn=async(p,keep)=>{
+      if(!VD||!VD.enc)return false;
+      try{await decJson(VD.enc,p)}catch(e){return false}
+      vpw=p;sessionStorage.setItem('planViewPw',p);if(keep)localStorage.setItem('planViewPwKeep',p);else localStorage.removeItem('planViewPwKeep');
+      await viewApply(true);return true;
+    };
     fbDoc.onSnapshot(snap=>{
       okAt=hhmmss();
       if(!snap.exists){cstat('⚠ 아직 편집용에서 저장된 데이터가 없습니다');return}
-      const d=snap.data();
-      if(d.savedAt!==lastSaved){lastSaved=d.savedAt;try{S=JSON.parse(d.json);migrate(S);applyVP(S);buildCal();render()}catch(e){cstat('⚠ 데이터를 읽지 못했습니다');return}}
-      cstat(`☁ 실시간 연결 · 최종 편집 저장 ${new Date(d.savedAt).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false})}`);
+      VD=snap.data();viewApply(false);
     },err=>cstat('⚠ 연결 실패: '+(err&&err.code||err)));
   }else{viewStat(false);pull();setInterval(pull,2000)}
 }else if(CLOUD&&fbDoc){
@@ -1604,16 +1686,20 @@ if(RO){
     await loginGate();
     cstat('☁ 데이터 불러오는 중…');
     let snap=null;try{snap=await fbDoc.get()}catch(e){alert('클라우드 데이터를 불러오지 못했습니다: '+(e.code||e.message)+'\n(인터넷 연결 또는 Firestore 규칙을 확인하세요) 이 상태에서는 클라우드에 저장되지 않습니다.')}
-    let st=null;
-    if(snap&&snap.exists){try{const d=snap.data();st=JSON.parse(d.json);migrate(st);cloudAt=d.savedAt;persist(JSON.stringify(st))}catch(e){st=null}}
-    cloudReady=!!snap;
+    let st=null,locked=false;
+    await refreshVpw();
+    if(snap&&snap.exists){try{const d=snap.data();if(d.enc){VSALT=d.enc.salt;if(!VPW){const p=prompt('열람 비밀번호가 설정된 데이터입니다.\n(Firestore 규칙이 갱신되지 않아 자동 확인이 안 됩니다) 열람 비밀번호를 입력하세요:');if(p)VPW=p}}
+        st=JSON.parse(await docJson(d));migrate(st);cloudAt=d.savedAt;persist(JSON.stringify(st))}catch(e){st=null;if(snap.data().enc){locked=true;VPW=null;alert('암호화된 데이터를 열지 못했습니다. 열람 비밀번호를 확인하거나 Firestore 규칙(plan/secret)을 설정 가이드대로 갱신하세요.\n이 상태에서는 클라우드에 저장되지 않습니다.')}}
+      if(!snap.data().enc){VPW=null;VSALT=null}}
+    cloudReady=!!snap&&!locked;
     bootEdit(st||load());
     if(snap&&!snap.exists)await cloudPush();
     else if(snap)cstat('☁ 클라우드 연결됨');
-    if(snap)fbDoc.onSnapshot(s=>{
+    if(snap&&!locked)fbDoc.onSnapshot(async s=>{
       if(!s.exists||s.metadata.hasPendingWrites)return;
       const d=s.data();if(d.by===CLIENT||d.savedAt===cloudAt)return;
-      try{cloudAt=d.savedAt;S=JSON.parse(d.json);migrate(S);buildCal();lastStr=JSON.stringify(S);persist(lastStr);UNDO=[];REDO=[];updUndo();closeModal();render();toast('다른 편집자의 변경 내용을 반영했습니다');cstat(`☁ 다른 편집자 변경 반영 ${hhmmss()}`)}catch(e){}
+      try{if(d.enc){if(d.enc.salt!==VSALT||!VPW){VSALT=d.enc.salt;await refreshVpw()}}else if(VPW){VPW=null;VSALT=null}
+        cloudAt=d.savedAt;S=JSON.parse(await docJson(d));migrate(S);buildCal();lastStr=JSON.stringify(S);persist(lastStr);UNDO=[];REDO=[];updUndo();closeModal();render();toast('다른 편집자의 변경 내용을 반영했습니다');cstat(`☁ 다른 편집자 변경 반영 ${hhmmss()}`)}catch(e){}
     });
   })();
 }else{
