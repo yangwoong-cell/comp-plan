@@ -94,6 +94,10 @@ input,select,textarea{font:inherit;color:inherit}
 .card{position:absolute;border-radius:7px;padding:2px 5px 1px;overflow:hidden;cursor:grab;user-select:none;touch-action:none;border:1px solid;border-left-width:5px;box-shadow:0 1px 2px rgba(20,30,50,.15);font-size:11.5px;line-height:1.25;display:flex;flex-direction:column;justify-content:flex-start;gap:1px}
 .card .cx{position:absolute;top:1px;right:1px;width:15px;height:15px;line-height:13px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.75);color:#a3231a;font-size:12px;font-weight:700;cursor:pointer;opacity:.55;text-align:center}
 .card:hover .cx{opacity:1}
+.card .ins{display:none;position:absolute;bottom:1px;width:15px;height:15px;line-height:13px;padding:0;border:0;border-radius:50%;background:#1d4f91;color:#fff;font-size:12px;font-weight:700;cursor:pointer;text-align:center;z-index:3}
+.card .ins.ib{left:1px}.card .ins.ia{right:1px}.card:hover .ins{display:block}.card .ins:hover{background:#e8590c}
+.ctxm{position:fixed;z-index:9990;background:#fff;border:1px solid #cfd6df;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.25);padding:4px;display:grid;min-width:190px}
+.ctxm button{border:0;background:transparent;text-align:left;padding:7px 10px;border-radius:5px;font-size:12.5px;cursor:pointer}.ctxm button:hover{background:#eef3fa}
 .card .cx:hover{background:#a3231a;color:#fff}
 .card .c1{padding-right:11px}
 .card.s2{background:var(--p2bg);border-color:var(--p2)}
@@ -190,7 +194,7 @@ table.tbl{border-collapse:separate;border-spacing:0;background:#fff;font-size:12
 #wkTxt{display:none;font-weight:700;color:#ffd98a}
 body.ro #wkIn,body.ro #wkSave{display:none}body.ro #wkTxt{display:inline}body.ro #wkBox b+*{}
 #shareStat{font-size:12px;color:#cfd9e6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:300px}
-body.ro .roh,body.ro #btnAdd,body.ro #btnHidden,body.ro #btnUndo,body.ro #btnRedo,body.ro #btnImp,body.ro #btnExp,body.ro #btnConnect,body.ro .eact,body.ro .cx,body.ro [data-act=padd],body.ro [data-act=pdel],body.ro [data-act=stdcopy]{display:none!important}
+body.ro .roh,body.ro #btnAdd,body.ro #btnHidden,body.ro #btnUndo,body.ro #btnRedo,body.ro #btnImp,body.ro #btnExp,body.ro #btnConnect,body.ro .eact,body.ro .cx,body.ro .ins,body.ro [data-act=padd],body.ro [data-act=pdel],body.ro [data-act=stdcopy]{display:none!important}
 body.ro .capa-max,body.ro [data-act=stdreset]{display:none}
 .capa-max{font-weight:500;font-size:12px;display:flex;gap:4px;align-items:center}
 .capa-max input{width:56px;border:1px solid var(--line);border-radius:5px;padding:2px 4px;text-align:center}
@@ -638,7 +642,7 @@ function renderDash(){
         `시작 ${md2(wdDate(Math.floor(it.s+1e-9)))} → 종료 ${md2(wdDate(Math.max(Math.ceil(it.e-1e-9)-1,0)))}`,
         it.est?`※ 해당 조합 공수 없음 → ${it.from||'미입력(0)'} 값으로 임시 대체`:'',d.remark?`비고: ${d.remark}`:''].filter(Boolean).join('\n');
       h+=`<div class="${cls}" data-eq="${eq.id}" data-uid="${it.inst.uid}" style="left:${it._x}px;width:${it._w}px;top:${it._top}px;height:${it._h}px;${cc?`background-color:${cc};border-color:${darker(cc)};border-left-color:${d.site==='3P'?'#2b7a6a':'#2f6f9f'};color:${textOn(cc)}`:''}" title="${esc(tip)}">
-        <button class="cx" data-act="cdel" title="공정 삭제">×</button><div class="c1" style="font-size:${it._fs||11.5}px">${esc(d.name)}${it.part?` <span class="part">${it.part[0]}/${it.part[1]}</span>`:''}</div>
+        <button class="cx" data-act="cdel" title="공정 삭제">×</button><button class="ins ib" data-pos="before" title="이 공정 앞에 공정 추가">＋</button><button class="ins ia" data-pos="after" title="이 공정 뒤에 공정 추가">＋</button><div class="c1" style="font-size:${it._fs||11.5}px">${esc(d.name)}${it.part?` <span class="part">${it.part[0]}/${it.part[1]}</span>`:''}</div>
         <div class="c2">${d.witness==='O'?'<span class="pill w">입회</span>':''}<span class="sl"><span class="pill ${d.site==='3P'?'p3':'p2'}">${d.site||'-'}</span><span class="lt">${cardLbl(it)}</span></span>${it.crew===3?'<span class="pill">3인</span>':''}${it.ot?'<span class="pill ot">잔업</span>':''}${Object.keys(NIGHTOPT).filter(k=>eq.options.includes(k)&&((/시운전/.test(d.name)&&!/준비/.test(d.name))||d.opt1===k||d.opt2===k||d.opt3===k)).map(k=>`<span class="pill ngt" title="${NIGHTOPT[k][1]}">${NIGHTOPT[k][0]}</span>`).join('')}${isMove(d)&&d.dn==='O'?'<span class="pill dn">주간이동</span>':''}</div></div>`;
     }
     h+=`</div></div>`;
@@ -877,26 +881,22 @@ function openProc(eqId,u){
     if(!inst.pid||inst.added){const n=$('#p_no').value;if(n!=='')ov.no=Number(n)||n}
     inst.ov=ov;inst.crew=+$('#p_crew').value;
     const mv=$('#p_md').value;inst.md=mv===''?null:Math.max(0,+mv);
-    const sd=$('#p_start').value;let moved=false;
-    if(!sd)inst.manualStart=null;
-    else{
-      const ni=wdIdx(dn(sd));
-      if(!(inst.manualStart!=null&&Math.floor(inst.manualStart+1e-9)===ni)){
-        const list=[...(SCH.get(eq.id)||[])].sort((x,y)=>x.ord-y.ord),k=list.findIndex(x=>x.inst===inst),s0=it.s,delta=ni-s0;
-        inst.manualStart=ni;
-        if(k>=0&&Math.abs(delta)>1e-9){for(let j=k+1;j<list.length;j++)if(list[j].inst.manualStart!=null&&list[j].s>=s0-1e-6)list[j].inst.manualStart+=delta;moved=true}
-      }
-    }
-    save();closeModal();render();if(moved)toast('시작일을 변경했습니다 — 이후 공정이 함께 이동했습니다');
+    const sd=$('#p_start').value;
+    if(!sd){inst.manualStart=null;save();closeModal();render();return}
+    const ni=wdIdx(dn(sd));
+    if(inst.manualStart!=null&&Math.floor(inst.manualStart+1e-9)===ni){save();closeModal();render();return}
+    save();closeModal();calc();askShift(eq.id,inst.uid,ni); // 시작일 변경 시 후속 공정 순연 여부 확인
   };
 }
 
 /* add process to equipment */
-function openAddProc(eqId){
+function openAddProc(eqId,at){
   if(RO)return;
   const eq=S.equipments.find(e=>e.id===eqId),P=S.master.processes;
-  const endI=eqEnd(eq),def=ds(wdDate(Math.ceil(endI-1e-9)));
+  const sorted0=[...(SCH.get(eq.id)||schedule(eq))].sort((a,b)=>a.ord-b.ord),ref=at?sorted0.find(x=>x.inst.uid===at.uid):null;
+  const endI=eqEnd(eq),def=ref?(at.pos==='after'?ds(wdDate(Math.ceil(ref.e-1e-9))):ds(wdDate(Math.floor(ref.s+1e-9)))):ds(wdDate(Math.ceil(endI-1e-9)));
   openModal(`<div class="mhead">공정 추가 — ${esc(eq.title)}</div><div class="mbody">
+    ${ref?`<div class="note" style="margin-bottom:6px">삽입 위치: <b>${esc(ref.d.name)}</b> 공정 ${at.pos==='after'?'바로 뒤':'바로 앞'} · 저장하면 후속 공정을 함께 순연할지 묻습니다.</div>`:''}
     <label class="fl">추가할 공정 선택<select id="a_sel"><option value="">(직접 입력)</option>${P.map(p=>`<option value="${p.id}">${p.no} ${esc(p.name)} [${p.type}]</option>`).join('')}</select></label>
     <div class="g2">
       <label class="fl">공정명<input id="a_name"></label>
@@ -933,17 +933,54 @@ function openAddProc(eqId){
     const items=SCH.get(eq.id)||schedule(eq);
     const sorted=[...items].sort((a,b)=>a.ord-b.ord);
     let k=-1;sorted.forEach((x,i)=>{if(x.s<=start+1e-9)k=i});
+    if(ref){const ri=sorted.findIndex(x=>x.inst.uid===at.uid);if(ri>=0)k=at.pos==='after'?ri:ri-1} // 지정한 공정 앞/뒤에 순서대로 삽입
     let order;
     if(!sorted.length)order=0;
     else if(k<0)order=sorted[0].ord-1;
     else if(k===sorted.length-1)order=sorted[k].ord+1;
     else order=sorted[k+1].ord>sorted[k].ord?(sorted[k].ord+sorted[k+1].ord)/2:sorted[k].ord+0.001;
     const base=P.find(x=>x.id===pid)||{};
-    eq.procs.push({uid:uid(),pid,added:true,par:$('#a_par').checked,order,manualStart:start,crew:+$('#a_crew').value,md:Math.max(0,+$('#a_md').value||0),
+    const oldS=new Map(items.map(x=>[x.inst.uid,x.s])),inst=({uid:uid(),pid,added:true,par:$('#a_par').checked,order,manualStart:start,crew:+$('#a_crew').value,md:Math.max(0,+$('#a_md').value||0),
       ov:{no:base.no??'추가',name,site:$('#a_site').value,witness:$('#a_wit').value,owner:$('#a_owner').value,noMan:$('#a_nm').value,unit:$('#a_unit').value,crane2:$('#a_c2').value,crane3:$('#a_c3').value,remark:$('#a_rm').value,type:'추가공정',parNo:'',parOff:''}});
-    save();closeModal();render();toast('공정을 추가했습니다. 후속 공정이 순연되었습니다');
+    eq.procs.push(inst);afterAdd(eq,inst,oldS,start);
   };
 }
+/* 후속 공정을 현재 위치에 고정(자동 이어붙기로 밀리는 카드만) */
+function pinKeep(eq,ids,old){
+  for(let g=0;g<400;g++){let ch=false;
+    for(const it of schedule(eq)){const o=old.get(it.inst.uid);if(!ids.has(it.inst.uid)||o==null)continue;
+      if(Math.abs(it.s-o)>1e-9){it.inst.manualStart=o;ch=true;break}}
+    if(!ch)break}
+}
+/* 공정 추가 직후: 후속 공정을 새 공정의 소요만큼 순연할지 선택 */
+function afterAdd(eq,inst,old,start){
+  const items=[...schedule(eq)].sort((a,b)=>a.ord-b.ord),k=items.findIndex(x=>x.inst===inst),n=items[k];
+  const fol=items.filter((x,j)=>j>k&&old.has(x.inst.uid)),dur=n?n.e-n.s:0;
+  const fin=(mode,msg)=>{
+    if(mode==='push'){for(const x of fol)if(x.inst.manualStart!=null)x.inst.manualStart+=dur}
+    else if(mode==='keep')pinKeep(eq,new Set(fol.map(x=>x.inst.uid)),old);
+    save();closeModal();render();toast(msg)};
+  if(!fol.length||dur<1e-9||inst.par){fin(null,'공정을 추가했습니다');return}
+  const dd=Math.round(dur*100)/100;
+  openModal(`<div class="mhead">후속 공정 순연 여부</div><div class="mbody">
+    <div><b>${esc(n.d.name)}</b> 공정(약 ${dd}일)을 추가합니다.</div>
+    <div class="note" style="margin-top:8px">이 공정 이후의 후속 공정 <b>${fol.length}개</b>를 추가한 공정의 소요(${dd}일)만큼 순연할까요?<br>· <b>후속 공정 순연</b>: 뒤 공정이 ${dd}일 뒤로 밀립니다.<br>· <b>순연 안 함</b>: 뒤 공정은 현재 일정을 유지합니다. (겹쳐 배치될 수 있음)</div>
+  </div><div class="mfoot"><button class="btn" id="ad_c" style="margin-right:auto">추가 취소</button><button class="btn" id="ad_n">순연 안 함</button><button class="btn pri" id="ad_y">후속 공정 순연</button></div>`);
+  $('#ad_c').onclick=()=>{eq.procs=eq.procs.filter(x=>x!==inst);closeModal();render()};
+  $('#ad_n').onclick=()=>fin('keep','공정을 추가했습니다 — 후속 공정은 유지했습니다');
+  $('#ad_y').onclick=()=>fin('push','공정을 추가했습니다 — 후속 공정을 순연했습니다');
+}
+/* 카드 우클릭 메뉴 */
+function closeCtx(){const m=$('.ctxm');if(m)m.remove()}
+function openCtx(x,y,eqId,uid){
+  closeCtx();const m=document.createElement('div');m.className='ctxm';
+  m.innerHTML=`<button data-c="before">⬆ 이 공정 앞에 공정 추가</button><button data-c="after">⬇ 이 공정 뒤에 공정 추가</button><button data-c="edit">✎ 공정 수정</button>`;
+  m.style.left=Math.min(x,innerWidth-210)+'px';m.style.top=Math.min(y,innerHeight-120)+'px';document.body.appendChild(m);
+  m.onclick=e=>{const b=e.target.closest('button');if(!b)return;closeCtx();
+    if(b.dataset.c==='edit')openProc(eqId,uid);else openAddProc(eqId,{uid,pos:b.dataset.c})};
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.ctxm'))closeCtx()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeCtx()});
 
 /* settings */
 function adjDate(str,dm,dd){const [y,m,d]=str.split('-').map(Number);let Y=y,M=m-1+dm;Y+=Math.floor(M/12);M=((M%12)+12)%12;const last=new Date(Date.UTC(Y,M+1,0)).getUTCDate();const x=new Date(Date.UTC(Y,M,Math.min(d,last)+dd));return x.toISOString().slice(0,10)}
@@ -1150,6 +1187,8 @@ view.addEventListener('click',e=>{
   const cm=e.target.closest('[data-act=capaMax]');
   if(cm){const v=parseFloat($('#capaMax').value);if(isNaN(v)||v<0){alert('Max 값을 0 이상의 숫자로 입력하세요.');return}
     S.settings.capa=v;S.settings.capaOv={};save();render();toast(`모든 일자에 capa ${v} 적용 (휴일은 0)`);return}
+  const ib=e.target.closest('.ins');
+  if(ib){const c=ib.closest('.card');openAddProc(c.dataset.eq,{uid:c.dataset.uid,pos:ib.dataset.pos});return}
   const cx=e.target.closest('.cx');
   if(cx){const c=cx.closest('.card'),eq=S.equipments.find(x=>x.id===c.dataset.eq),inst=eq&&eq.procs.find(p=>p.uid===c.dataset.uid);
     const it=(SCH.get(c.dataset.eq)||[]).find(i=>i.inst.uid===c.dataset.uid);
@@ -1243,7 +1282,7 @@ function masterChanged(){S.equipments.forEach(syncEq);save()}
 /* drag & drop of process cards */
 let drag=null;const bub=document.createElement('div');bub.className='bubble';
 view.addEventListener('pointerdown',e=>{
-  const c=e.target.closest('.card');if(!c||e.button!==0||e.target.closest('.cx'))return;
+  const c=e.target.closest('.card');if(!c||e.button!==0||e.target.closest('.cx')||e.target.closest('.ins'))return;
   drag={c,x0:e.clientX,moved:false,eq:c.dataset.eq,uid:c.dataset.uid,left0:parseFloat(c.style.left),idx:null};
   c.setPointerCapture(e.pointerId);
 });
@@ -1263,12 +1302,35 @@ function endDrag(e,cancel){
   if(!d.moved){openProc(d.eq,d.uid);return}
   const eq=S.equipments.find(x=>x.id===d.eq),items=[...SCH.get(d.eq)].sort((a,b)=>a.ord-b.ord);
   const k=items.findIndex(i=>i.inst.uid===d.uid);if(k<0||d.idx==null)return;
-  const delta=d.idx-items[k].s;
-  items[k].inst.manualStart=d.idx;
-  const s0=items[k].s; // 시간상 이 카드보다 앞/같은 위치에 있는 카드는 순서가 뒤여도 이동하지 않음
-  for(let j=k+1;j<items.length;j++)if(items[j].inst.manualStart!=null&&items[j].s>=s0-1e-6)items[j].inst.manualStart+=delta;
-  save();render();toast(`${md2(wdDate(Math.floor(d.idx+1e-9)))} 시작으로 이동 — 이후 공정이 함께 이동했습니다`);
+  askShift(d.eq,d.uid,d.idx); // 후속 공정 순연 여부 확인
 }
+/* 공정 시작일 변경(드래그/팝업) 공통: 후속 공정을 함께 순연할지 선택 */
+function applyMove(eq,uid,ni,push){
+  const list=[...(SCH.get(eq.id)||schedule(eq))].sort((a,b)=>a.ord-b.ord),k=list.findIndex(x=>x.inst.uid===uid);if(k<0)return;
+  const inst=list[k].inst,s0=list[k].s,delta=ni-s0,old=new Map(list.map(x=>[x.inst.uid,x.s])),after=new Set(list.filter((x,j)=>j>k&&x.s>=s0-1e-6).map(x=>x.inst.uid));
+  inst.manualStart=ni;
+  if(push){for(const x of list)if(after.has(x.inst.uid)&&x.inst.manualStart!=null)x.inst.manualStart+=delta} // 시간상 앞쪽 카드는 이동하지 않음
+  else{ // 후속 공정은 현재 위치 유지: 자동 이어붙기로 밀리는 카드는 현재 시작 위치에 고정
+    pinKeep(eq,after,old);
+  }
+}
+function askShift(eqId,uid,ni){
+  const eq=S.equipments.find(x=>x.id===eqId);if(!eq)return;
+  const list=[...(SCH.get(eqId)||[])].sort((a,b)=>a.ord-b.ord),k=list.findIndex(x=>x.inst.uid===uid);if(k<0)return;
+  const cur=list[k],delta=ni-cur.s;if(Math.abs(delta)<1e-9){render();return}
+  const fol=list.filter((x,j)=>j>k&&x.s>=cur.s-1e-6);
+  const to=md2(wdDate(Math.floor(ni+1e-9))),fin=(push,msg)=>{applyMove(eq,uid,ni,push);save();render();toast(msg)};
+  if(!fol.length){fin(true,`${to} 시작으로 이동했습니다`);return}
+  const dd=Math.round(Math.abs(delta)*100)/100;
+  openModal(`<div class="mhead">후속 공정 순연 여부</div><div class="mbody">
+    <div><b>${esc(cur.d.name)}</b> 공정을 <b>${to}</b> 시작으로 옮깁니다. (${dd}일 ${delta>0?'뒤로':'앞으로'})</div>
+    <div class="note" style="margin-top:8px">이 공정 이후의 후속 공정 <b>${fol.length}개</b>도 같은 만큼 함께 순연(이동)할까요?<br>· <b>후속 공정도 순연</b>: 뒤 공정이 같은 일수만큼 같이 이동합니다.<br>· <b>이 공정만 이동</b>: 뒤 공정은 현재 일정을 그대로 유지합니다.</div>
+  </div><div class="mfoot"><button class="btn" id="sh_c" style="margin-right:auto">취소</button><button class="btn" id="sh_n">이 공정만 이동</button><button class="btn pri" id="sh_y">후속 공정도 순연</button></div>`);
+  $('#sh_c').onclick=()=>{closeModal();render()};
+  $('#sh_n').onclick=()=>{closeModal();fin(false,`${to} 시작으로 이동 — 후속 공정은 유지했습니다`)};
+  $('#sh_y').onclick=()=>{closeModal();fin(true,`${to} 시작으로 이동 — 후속 공정도 함께 순연했습니다`)};
+}
+view.addEventListener('contextmenu',e=>{const c=e.target.closest('.card');if(RO||!c)return;e.preventDefault();openCtx(e.clientX,e.clientY,c.dataset.eq,c.dataset.uid)});
 view.addEventListener('pointerup',e=>endDrag(e,false));
 view.addEventListener('pointercancel',e=>endDrag(e,true));
 
@@ -1328,7 +1390,7 @@ html,body{background:#fff!important;height:auto!important;overflow:visible!impor
 .pf{position:absolute;left:${MARG}mm;right:${MARG}mm;bottom:${MARG-2}mm;font-size:8pt;color:#666;text-align:right}
 .sumblock{position:static!important;box-shadow:none!important}
 .left{position:static!important}
-.eact,.cx,.btn,.capa-max,[data-act]{display:none!important}
+.eact,.cx,.ins,.btn,.capa-max,[data-act]{display:none!important}
 .erow input.fld,.erow select.fld{border:0!important;background:transparent!important;appearance:none;-webkit-appearance:none;padding:0 2px;font-weight:700;color:#000}
 .card{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
