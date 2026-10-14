@@ -99,8 +99,7 @@ input,select,textarea{font:inherit;color:inherit}
 .tl .xln{position:absolute;left:0;right:0;border-top:1px dashed #b9c2cf;background:rgba(255,255,255,.45);pointer-events:none}
 .tl .xcard{position:absolute;box-sizing:border-box;border-radius:6px;border:1px solid;padding:0 6px;font-size:11px;line-height:26px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;box-shadow:0 1px 2px rgba(20,30,50,.18);user-select:none;touch-action:none;z-index:2}
 .xcard i{font-style:normal;font-size:10px;color:#445;opacity:.9}
-.xc-in{background:#ffe3c8;border-color:#e0a05a}.xc-out{background:#e6dcf5;border-color:#a98bd6}.xc-mix{background:linear-gradient(90deg,#ffe3c8 50%,#e6dcf5 50%);border-color:#c49a88}
-.xc-os{background:#d7eef0;border-color:#6fb7bf}.xc-mt{background:#fff3b8;border-color:#d9b800}
+.xcard.s2{background:var(--p2bg);border-color:var(--p2);border-left-width:5px}.xcard.s3{background:var(--p3bg);border-color:var(--p3);border-left-width:5px}.xcard .pill{margin-right:2px;vertical-align:1px}
 .xtog{opacity:.55}.xtog.on{opacity:1;background:#fff3b8;border-color:#d9b800}.xtogs{display:inline-flex;gap:4px;margin-right:8px}
 .pill.mtp{background:#fff3b8;border-color:#d9b800}
 .card .ins{display:none;position:absolute;bottom:1px;width:15px;height:15px;line-height:13px;padding:0;border:0;border-radius:50%;background:#1d4f91;color:#fff;font-size:12px;font-weight:700;cursor:pointer;text-align:center;z-index:3}
@@ -525,6 +524,7 @@ function calc(){
     const items=schedule(eq);SCH.set(eq.id,items);
     if(eq.done||eq.tbd)continue; // 생산완료·일정 미확정 장비는 부하·크레인 집계에서 제외
     for(const x of exFor(eq))for(const [i,ld] of exLoads(x)){add(AGG.load,i,ld);add(x.site==='3P'?AGG.load3:AGG.load2,i,ld)} // 비계획 사내 작업 부하
+    for(const x of exFor(eq))for(const [i,v] of exCrane(x))add(exSite(x)==='3P'?AGG.c3[exLine(x)]:AGG.c2,i,v);
     for(const it of items){
       const d=it.d,ls=Math.floor(it.s+1e-9),le=Math.ceil(it.e-1e-9);
       for(let i=ls;i<le;i++){
@@ -601,9 +601,19 @@ function exLoads(x){ // [작업일 index, Man-day 부하] — 사내 작업분�
     if(tot>1e-9)for(let i=ls;i<le;i++){const o=ov(i);if(o>1e-9&&availIdx('HP',i))out.push([i,((+x.mh||0)/HPD)*o/tot])}}
   return out;
 }
+function exCrane(x){ // [작업일 index, 크레인 점유량(일 × 사용률)] — 외주·비계획 작업의 크레인 사용
+  if(x.type==='mt'||!x.crane)return[];const p=Math.max(0,Math.min(100,+x.cpct||0))/100;if(p<=0)return[];
+  const sp=exSpan(x),out=[];if(sp.L<=0)return out;
+  const ls=Math.floor(sp.s+1e-9),le=Math.ceil(sp.e-1e-9);
+  for(let i=ls;i<le;i++){const o=Math.min(sp.e,i+1)-Math.max(sp.s,i);if(o>1e-9&&availIdx(sp.own,i))out.push([i,o*p])}
+  return out;
+}
+const exSite=x=>x.site==='3P'?'3P':'2P',exLine=x=>'ABC'.includes(x.line||'')&&x.line?x.line:'A';
 function matMin(eq,uid){const inst=eq.procs.find(p=>p.uid===uid);if(!inst)return null;let m=null;for(const x of exFor(eq))if(x.type==='mt'&&x.date&&mtMatch(x,eq,inst)){const i=wdIdx(dn(x.date));if(m==null||i>m)m=i}return m}
 const exKindTxt=x=>x.type==='os'?'외주':({in:'사내',out:'외주',mix:'사내+외주'})[x.kind];
-function exSub(x){
+const exCr=x=>(x.type!=='mt'?`${exSite(x)==='3P'?' '+exLine(x)+'라인':''}${x.crane?' 🏗'+(+x.cpct||0)+'%':''}`:'');
+function exSub(x){return exSub0(x)+exCr(x)}
+function exSub0(x){
   if(x.type==='mt')return [x.qty,(x.procUids||[]).length?`→ 공정 ${(x.procUids||[]).length}개`:'',x.scope==='proj'?'· 과제전체':''].filter(Boolean).join(' ');
   if(x.type==='os')return `${x.cat||''} ${x.vendor||''} LT ${f1x(x.lt)}d`.trim();
   if(x.kind==='in')return `사내 ${f1x(x.mh)}h`;
@@ -624,11 +634,11 @@ function exLines(eq,xS,xE,gs){
     for(const c of arr){let k=0;while(ends[k]!=null&&ends[k]>c.l)k++;ends[k]=c.l+c.w+2;c.lane=k}
     lh.push(Math.max(1,ends.length)*EXH+6);
     html+=`<div class="xln" data-line="${li}"></div>`;
-    for(const c of arr){const x=c.x,kc=x.type==='up'?'xc-'+x.kind:'xc-'+x.type;
+    for(const c of arr){const x=c.x,kc=exSite(x)==='3P'?'s3':'s2',ic=x.type==='up'?'📌':x.type==='os'?'🏭':'📦';
       const tip=[`${EXLBL[li][1]}: ${x.name||''}`,x.type==='up'?`적용: ${x.scope==='proj'?'과제 전체':'이 장비'} · ${exKindTxt(x)}공정`:'',exSub(x),
         x.type==='mt'?`입고예정 ${x.date||'-'}`:`시작 ${x.start||'-'}`,x.note?`비고: ${x.note}`:''].filter(Boolean).join('\n');
-      html+=`<div class="xcard ${kc}" data-eq="${eq.id}" data-xid="${x.id}" data-line="${li}" data-lane="${c.lane}" style="left:${c.l}px;width:${c.w}px" title="${esc(tip)}">${x.type==='mt'?'📦 ':''}<b>${esc(x.name||x.cat||'')}</b> <i>${esc(exSub(x))}${x.type==='up'&&x.scope==='proj'?' · 과제전체':''}</i></div>`}
-    labels+=`<div class="xl" data-line="${li}" style="width:${LW}px"><span>${EXLBL[li][0]} ${EXLBL[li][1]} <small>(${arr.length})</small></span><button class="btn sm" data-act="xadd" data-eq="${eq.id}" data-kind="${EXLBL[li][2]}">＋ 추가</button></div>`;
+      html+=`<div class="xcard ${kc}" data-eq="${eq.id}" data-xid="${x.id}" data-line="${li}" data-lane="${c.lane}" style="left:${c.l}px;width:${c.w}px" title="${esc(tip)}"><span class="pill ${exSite(x)==='3P'?'p3':'p2'}">${exSite(x)}</span> ${c.w>=110?ic+' ':''}<b>${esc(x.name||x.cat||'')}</b> <i>${esc(exSub(x))}${x.type==='up'&&x.scope==='proj'?' · 과제전체':''}</i></div>`}
+    labels+=`<div class="xl" data-line="${li}" style="left:${LEFTW[0]}px;width:${LW-LEFTW[0]}px"><span>${EXLBL[li][0]} ${EXLBL[li][1]} <small>(${arr.length})</small></span><button class="btn sm" data-act="xadd" data-eq="${eq.id}" data-kind="${EXLBL[li][2]}">＋ 추가</button></div>`;
   });
   return{html,lh,sum:lh.reduce((a,b)=>a+b,0),labels};
 }
@@ -737,8 +747,9 @@ function fitCards(){
       if(lb){lb.style.top=off+'px';lb.style.height=h2+'px'}
       $$(`.xcard[data-line="${li}"]`,row).forEach(c=>{c.style.top=(off+3+(+c.dataset.lane)*EXH)+'px';c.style.height=(EXH-2)+'px'});
       off+=h2});
-    H=off;
+    const H0=H;H=off;
     row.style.height=H+'px';$$('.left,.tl',row).forEach(x=>x.style.height=H+'px');
+    $$('.left .lc',row).forEach(x=>x.style.height=H0+'px'); // 과제 정보 칸은 공정 영역 높이만 사용 (아래 3개 라인과 겹치지 않게)
   }
 }
 
@@ -761,6 +772,11 @@ function openExtraView(id){
   openModal(`<div class="mhead">${esc(x.name||x.cat||'')}</div><div class="mbody"><table class="tbl">${rows.map(r=>`<tr><th style="width:120px">${r[0]}</th><td>${esc(r[1])}</td></tr>`).join('')}</table></div><div class="mfoot"><button class="btn pri" id="xv_c">닫기</button></div>`,true);
   $('#xv_c').onclick=closeModal;
 }
+const craneBlock=x=>`<div class="fl">작업장 · 크레인
+    <div class="g2"><label class="fl">작업장<select id="x_site"><option${exSite(x)==='2P'?' selected':''}>2P</option><option${exSite(x)==='3P'?' selected':''}>3P</option></select></label>
+      <label class="fl" id="x_lnw">3P 라인 위치<select id="x_line">${['A','B','C'].map(l=>`<option${exLine(x)===l?' selected':''}>${l}</option>`).join('')}</select></label></div>
+    <label class="ck"><input type="checkbox" id="x_cr"${x.crane?' checked':''}> 크레인 사용</label>
+    <label class="fl" id="x_cpw" style="margin-left:22px">크레인 사용 비율 (공정 기간 중 %) <input id="x_cp" type="number" min="0" max="100" step="5" value="${x.cpct==null||x.cpct===''?100:x.cpct}" style="width:90px"> <span class="note">100% = 해당 기간 내내 크레인 점유 (크레인 부하 1.0)</span></label></div>`;
 function openExtra(eqId,type,id,draft){
   if(RO){openExtraView(id);return}
   const eq=S.equipments.find(e=>e.id===eqId);if(!eq)return;
@@ -779,11 +795,11 @@ function openExtra(eqId,type,id,draft){
       <label class="ck"><input type="radio" name="x_kind" value="in"${x.kind==='in'?' checked':''}> 사내공정</label>
       <label class="ck"><input type="radio" name="x_kind" value="out"${x.kind==='out'?' checked':''}> 외주공정</label>
       <label class="ck"><input type="radio" name="x_kind" value="mix"${x.kind==='mix'?' checked':''}> 사내·외주 복합</label></div>
-    <div class="g2" id="x_inrow"><label class="fl">작업장<select id="x_site"><option${x.site==='2P'?' selected':''}>2P</option><option${x.site==='3P'?' selected':''}>3P</option></select></label>
-      <label class="fl">작업 인원<select id="x_crew"><option value="2"${+x.crew===2?' selected':''}>2인 1조</option><option value="3"${+x.crew===3?' selected':''}>3인 1조</option></select></label>
+    <div class="g2" id="x_inrow"><label class="fl">작업 인원<select id="x_crew"><option value="2"${+x.crew===2?' selected':''}>2인 1조</option><option value="3"${+x.crew===3?' selected':''}>3인 1조</option></select></label>
       <label class="fl">소요 Man hour (사내)<input id="x_mh" type="number" step="0.5" min="0" value="${x.mh}"></label></div>
     <div class="g2" id="x_outrow"><label class="fl">LT (일, 외주)<input id="x_lt" type="number" step="0.5" min="0" value="${x.lt}"></label>
       <label class="fl">외주 업체 <span class="note">(선택)</span><input id="x_vendor" list="x_vl" value="${esc(x.vendor)}"><datalist id="x_vl">${allVs.map(v=>`<option value="${esc(v)}">`).join('')}</datalist></label></div>
+    ${craneBlock(x)}
     <label class="fl">시작일<input id="x_start" type="date" value="${x.start}"></label>
     <div class="note" id="x_prev"></div>`;
   else if(type==='os')body=`<div class="g2"><label class="fl">외주 카테고리<select id="x_cat">${opt(V.map(c=>c.cat),x.cat)}</select></label>
@@ -791,13 +807,15 @@ function openExtra(eqId,type,id,draft){
     <label class="fl" id="x_vfree" style="display:none">업체명 직접 입력<input id="x_vendor" value="${esc(x.vendor)}"></label>
     <div class="g2"><label class="fl">LT (일)<input id="x_lt" type="number" step="0.5" min="0" value="${x.lt}"></label>
       <label class="fl">시작일<input id="x_start" type="date" value="${x.start}"></label></div>
+    ${craneBlock(x)}
     <label class="fl">작업/품명 <span class="note">(선택, 카드에 표시)</span><input id="x_name" value="${esc(x.name)}" placeholder="예) 흡입배관 제작"></label>
     <div class="note"><button class="btn sm" id="x_vm" type="button">⚙ 카테고리·업체 목록 편집/추가</button></div>`;
   else body=`<label class="fl">자재 품목<input id="x_name" value="${esc(x.name)}" placeholder="예) 임펠러, 시일, 배관 자재"></label>
     <div class="fl">적용 범위
       <label class="ck"><input type="radio" name="x_sc" value="eq"${x.scope!=='proj'?' checked':''}> 이 장비만</label>
       <label class="ck"><input type="radio" name="x_sc" value="proj"${x.scope==='proj'?' checked':''}> 이 과제 전체 <span class="note">(같은 과제명·과제코드 장비 모두 — 선택한 공정과 같은 공정에 각각 적용)</span></label></div>
-    <div class="g2"><label class="fl">입고 예정일<input id="x_date" type="date" value="${x.date}"></label><label class="fl">수량/규격 <span class="note">(선택)</span><input id="x_qty" value="${esc(x.qty)}"></label></div>
+    <div class="g2"><label class="fl">입고 예정일<input id="x_date" type="date" value="${x.date}"></label><label class="fl">표시 작업장<select id="x_site"><option${exSite(x)==='2P'?' selected':''}>2P</option><option${exSite(x)==='3P'?' selected':''}>3P</option></select></label></div>
+    <div class="g2"><label class="fl">수량/규격 <span class="note">(선택)</span><input id="x_qty" value="${esc(x.qty)}"></label></div>
     <div class="fl">입고되어야 진행되는 사내 공정 <span class="note">(선택 시 그 공정은 입고일 이후에만 시작됩니다. 입고 당일 또는 이후로는 자유롭게 조정 가능)</span>
       <div style="max-height:190px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:#fff">${procs.length?procs.map(i=>`<label class="ck" style="display:flex"><input type="checkbox" class="x_pu" value="${i.inst.uid}" data-pid="${esc(i.inst.pid)}"${(x.scope==='proj'?(x.pids||[]).includes(i.inst.pid):(x.procUids||[]).includes(i.inst.uid))?' checked':''}> ${esc(i.d.name)} <span class="note">(현재 ${md2(wdDate(Math.floor(i.s+1e-9)))} 시작)</span></label>`).join(''):'<span class="note">이 장비에 사내 공정이 없습니다.</span>'}</div></div>`;
   openModal(`<div class="mhead">${ttl} ${old?'수정':'추가'} — ${esc(eq.title)}</div><div class="mbody">${body}
@@ -806,10 +824,12 @@ function openExtra(eqId,type,id,draft){
   const g=s=>{const e=$(s);return e?e.value:''};
   const kind=()=>(document.querySelector('input[name=x_kind]:checked')||{}).value||'in';
   const collect=()=>{const o={type,eqId:eq.id,name:g('#x_name').trim(),note:g('#x_note').trim()};
-    if(type==='up'){Object.assign(o,{scope:(document.querySelector('input[name=x_sc]:checked')||{}).value||'eq',kind:kind(),site:g('#x_site'),crew:+g('#x_crew'),mh:+g('#x_mh')||0,lt:+g('#x_lt')||0,vendor:g('#x_vendor').trim(),start:g('#x_start')})}
+    if(type!=='mt')Object.assign(o,{site:g('#x_site'),line:g('#x_line'),crane:!!($('#x_cr')&&$('#x_cr').checked),cpct:Math.max(0,Math.min(100,+g('#x_cp')||0))});
+    if(type==='up'){Object.assign(o,{scope:(document.querySelector('input[name=x_sc]:checked')||{}).value||'eq',kind:kind(),crew:+g('#x_crew'),mh:+g('#x_mh')||0,lt:+g('#x_lt')||0,vendor:g('#x_vendor').trim(),start:g('#x_start')})}
     else if(type==='os'){const vs=g('#x_vsel');Object.assign(o,{cat:g('#x_cat'),vendor:vs==='__free'?g('#x_vendor').trim():vs,lt:+g('#x_lt')||0,start:g('#x_start')})}
-    else{const ck=[...document.querySelectorAll('.x_pu:checked')];Object.assign(o,{scope:(document.querySelector('input[name=x_sc]:checked')||{}).value||'eq',date:g('#x_date'),qty:g('#x_qty').trim(),procUids:ck.map(c=>c.value),pids:ck.map(c=>c.dataset.pid)})}
+    else{const ck=[...document.querySelectorAll('.x_pu:checked')];Object.assign(o,{site:g('#x_site'),scope:(document.querySelector('input[name=x_sc]:checked')||{}).value||'eq',date:g('#x_date'),qty:g('#x_qty').trim(),procUids:ck.map(c=>c.value),pids:ck.map(c=>c.dataset.pid)})}
     return o};
+  if(type!=='mt'){const sc=()=>{$('#x_lnw').style.display=g('#x_site')==='3P'?'':'none';$('#x_cpw').style.display=$('#x_cr').checked?'':'none'};$('#x_site').onchange=sc;$('#x_cr').onchange=sc;sc()}
   if(type==='up'){
     const sync=()=>{const k=kind();$('#x_inrow').style.display=k==='out'?'none':'';$('#x_outrow').style.display=k==='in'?'none':'';
       $('#x_outrow label:nth-child(2)').style.display=k==='in'?'none':'';
@@ -853,6 +873,7 @@ function openDayStatus(date){
       const ld=hp?it.crew*Math.max(ov,0):0;
       rows.push({eq,it,d,ov:Math.max(ov,0),ld,hp,c3:crane3Line(d,eq)});
     }
+    for(const x of exFor(eq))if(x.type==='os'||(x.type==='up'&&x.kind==='out')){const sp=exSpan(x),ov=Math.min(sp.e,di+1)-Math.max(sp.s,di);if(ov>1e-9&&availIdx('협력업체',di))rows.push({eq,it:{part:null,ot:0},d:{name:'[외주] '+(x.name||x.cat||'')+(x.vendor?' ('+x.vendor+')':''),site:exSite(x),owner:'협력업체',witness:'X',type:'외주',crane2:x.crane&&exSite(x)==='2P'?'O':'',crane3:''},ov,ld:0,hp:false,c3:x.crane&&exSite(x)==='3P'?exLine(x):null})}
     for(const x of exFor(eq))for(const [i,ld] of exLoads(x))if(i===di)rows.push({eq,it:{part:null,ot:0},d:{name:'[비계획] '+x.name,site:x.site||'2P',owner:'HP',witness:'X',type:'비계획'},ov:x.kind==='in'?ld/(+x.crew||S.settings.crew):ld,ld,hp:true,c3:null});
     // 잔업 부하(마지막 날에 합산되는 초과분)는 calc()와 동일하게 표에 반영
   }
@@ -1724,8 +1745,8 @@ function exportXlsx(sel){
   const exSheet=(type,head,wid,mk)=>{const R=[HD([...BH,...head])];
     for(const eq of S.equipments){if(eq.done)continue;for(const x of exFor(eq))if(x.type===type)R.push([...base(eq),...mk(x,eq).map(cell)])}
     if(R.length===1)R.push([{v:'(등록된 항목 없음)',s:XS.left}]);return xlsSheet(R,[26,12,10,10,7,7,...wid],[0,1])};
-  if(sel.up)sheets.push(['비계획작업',exSheet('up',['작업명','적용범위','구분','작업장','인원(조)','공수(h)','Man-day','LT(일)','외주업체','시작일','종료일','비고'],[22,10,10,8,8,9,9,8,14,12,12,30],(x,eq)=>{const sp=exSpan(x);return[x.name||'',x.scope==='proj'?'과제 전체':'이 장비',exKindTxt(x)+'공정',x.kind==='out'?'':(x.site||''),x.kind==='out'?'':sp.crew,x.kind==='out'?'':(+x.mh||0),x.kind==='out'?'':Math.round((+x.mh||0)/HPD*100)/100,x.kind==='in'?Math.round(sp.L*100)/100:(+x.lt||0),x.vendor||'',x.start||'',endD(sp),x.note||'']})]);
-  if(sel.os)sheets.push(['외주공정',exSheet('os',['카테고리','업체','작업/품명','LT(일)','시작일','종료일','비고'],[14,14,22,8,12,12,30],(x,eq)=>{const sp=exSpan(x);return[x.cat||'',x.vendor||'',x.name||'',+x.lt||0,x.start||'',endD(sp),x.note||'']})]);
+  if(sel.up)sheets.push(['비계획작업',exSheet('up',['작업명','적용범위','구분','작업장','3P 라인','크레인','크레인 비율(%)','인원(조)','공수(h)','Man-day','LT(일)','외주업체','시작일','종료일','비고'],[22,10,10,8,8,8,10,8,9,9,8,14,12,12,30],(x,eq)=>{const sp=exSpan(x);return[x.name||'',x.scope==='proj'?'과제 전체':'이 장비',exKindTxt(x)+'공정',exSite(x),exSite(x)==='3P'?exLine(x):'',x.crane?'사용':'',x.crane?(+x.cpct||0):'',x.kind==='out'?'':sp.crew,x.kind==='out'?'':(+x.mh||0),x.kind==='out'?'':Math.round((+x.mh||0)/HPD*100)/100,x.kind==='in'?Math.round(sp.L*100)/100:(+x.lt||0),x.vendor||'',x.start||'',endD(sp),x.note||'']})]);
+  if(sel.os)sheets.push(['외주공정',exSheet('os',['카테고리','업체','작업/품명','작업장','3P 라인','크레인','크레인 비율(%)','LT(일)','시작일','종료일','비고'],[14,14,22,8,8,8,10,8,12,12,30],(x,eq)=>{const sp=exSpan(x);return[x.cat||'',x.vendor||'',x.name||'',exSite(x),exSite(x)==='3P'?exLine(x):'',x.crane?'사용':'',x.crane?(+x.cpct||0):'',+x.lt||0,x.start||'',endD(sp),x.note||'']})]);
   if(sel.mt)sheets.push(['자재현황',exSheet('mt',['품목','적용범위','수량/규격','입고예정일','연결 공정(입고 후 진행)','비고'],[22,10,12,12,34,30],(x,eq)=>{const ps=(SCH.get(eq.id)||[]).filter(it=>mtMatch(x,eq,it.inst)).map(it=>it.d.name).join(', ');return[x.name||'',x.scope==='proj'?'과제 전체':'이 장비',x.qty||'',x.date||'',ps,x.note||'']})]);
   const HX='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',RT='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
   const files=[
