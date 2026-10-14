@@ -94,6 +94,15 @@ input,select,textarea{font:inherit;color:inherit}
 .card{position:absolute;border-radius:7px;padding:2px 5px 1px;overflow:hidden;cursor:grab;user-select:none;touch-action:none;border:1px solid;border-left-width:5px;box-shadow:0 1px 2px rgba(20,30,50,.15);font-size:11.5px;line-height:1.25;display:flex;flex-direction:column;justify-content:flex-start;gap:1px}
 .card .cx{position:absolute;top:1px;right:1px;width:15px;height:15px;line-height:13px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.75);color:#a3231a;font-size:12px;font-weight:700;cursor:pointer;opacity:.55;text-align:center}
 .card:hover .cx{opacity:1}
+.erow .left .xl{position:absolute;left:0;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 8px 0 14px;box-sizing:border-box;border-top:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.72);font-size:11.5px;font-weight:700;color:#2a3a4d;z-index:3}
+.xl small{font-weight:400;color:#667}
+.tl .xln{position:absolute;left:0;right:0;border-top:1px dashed #b9c2cf;background:rgba(255,255,255,.45);pointer-events:none}
+.tl .xcard{position:absolute;box-sizing:border-box;border-radius:6px;border:1px solid;padding:0 6px;font-size:11px;line-height:26px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;box-shadow:0 1px 2px rgba(20,30,50,.18);user-select:none;touch-action:none;z-index:2}
+.xcard i{font-style:normal;font-size:10px;color:#445;opacity:.9}
+.xc-in{background:#ffe3c8;border-color:#e0a05a}.xc-out{background:#e6dcf5;border-color:#a98bd6}.xc-mix{background:linear-gradient(90deg,#ffe3c8 50%,#e6dcf5 50%);border-color:#c49a88}
+.xc-os{background:#d7eef0;border-color:#6fb7bf}.xc-mt{background:#fff3b8;border-color:#d9b800}
+.xtog{opacity:.55}.xtog.on{opacity:1;background:#fff3b8;border-color:#d9b800}.xtogs{display:inline-flex;gap:4px;margin-right:8px}
+.pill.mtp{background:#fff3b8;border-color:#d9b800}
 .card .ins{display:none;position:absolute;bottom:1px;width:15px;height:15px;line-height:13px;padding:0;border:0;border-radius:50%;background:#1d4f91;color:#fff;font-size:12px;font-weight:700;cursor:pointer;text-align:center;z-index:3}
 .card .ins.ib{left:1px}.card .ins.ia{right:1px}.card:hover .ins{display:block}.card .ins:hover{background:#e8590c}
 .ctxm{position:fixed;z-index:9990;background:#fff;border:1px solid #cfd6df;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.25);padding:4px;display:grid;min-width:190px}
@@ -194,7 +203,7 @@ table.tbl{border-collapse:separate;border-spacing:0;background:#fff;font-size:12
 #wkTxt{display:none;font-weight:700;color:#ffd98a}
 body.ro #wkIn,body.ro #wkSave{display:none}body.ro #wkTxt{display:inline}body.ro #wkBox b+*{}
 #shareStat{font-size:12px;color:#cfd9e6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;max-width:300px}
-body.ro .roh,body.ro #btnAdd,body.ro #btnHidden,body.ro #btnUndo,body.ro #btnRedo,body.ro #btnImp,body.ro #btnExp,body.ro #btnConnect,body.ro .eact,body.ro .cx,body.ro .ins,body.ro [data-act=padd],body.ro [data-act=pdel],body.ro [data-act=stdcopy]{display:none!important}
+body.ro .roh,body.ro #btnAdd,body.ro #btnHidden,body.ro #btnUndo,body.ro #btnRedo,body.ro #btnImp,body.ro #btnExp,body.ro #btnConnect,body.ro .eact,body.ro [data-act=xadd],body.ro .cx,body.ro .ins,body.ro [data-act=padd],body.ro [data-act=pdel],body.ro [data-act=stdcopy]{display:none!important}
 body.ro .capa-max,body.ro [data-act=stdreset]{display:none}
 .capa-max{font-weight:500;font-size:12px;display:flex;gap:4px;align-items:center}
 .capa-max input{width:56px;border:1px solid var(--line);border-radius:5px;padding:2px 4px;text-align:center}
@@ -292,6 +301,9 @@ const WK=['일','월','화','수','목','금','토'];
 const GAPMM=96/25.4; // 1mm
 const HPD=8; // 1 man-day = 8 공수(시간)
 const KEY='compressorPlan_v1';
+const DEFVENDORS="배관 - 한맥기계, 한창, 은다승, 스타우프\n배선 - 드림테크, 아진시스텍\n튜빙 - 대성파워텍, 화진기업\n인슐레이션 - 고구려\n세척 및 방청 - 대성파워텍\n가스용역 - 강원가스\nLeak test - 강원가스, 우진\n포장 - 태영, 산호\n시험배관 - 대원ENG";
+function parseVendors(txt){return String(txt).split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{const i=l.indexOf(' - '),j=i>=0?i:l.indexOf('-'),cat=(j>=0?l.slice(0,j):l).trim(),vs=j>=0?l.slice(j+(i>=0?3:1)).split(/[,，]/).map(s=>s.trim()).filter(Boolean):[];return{cat,vs}}).filter(c=>c.cat)}
+const vendorsText=()=>(S.settings.vendors||[]).map(c=>c.cat+' - '+c.vs.join(', ')).join('\n');
 let S, WD=[], WDI=new Map(), SCH=new Map(), AGG=null;
 let ui={tab:'dash',stdCat:'AIR',stdModel:'ALL'};
 
@@ -327,14 +339,15 @@ const cardColor=d=>d.color||'';
 function defaults(){
   const s={v:1,settings:{dayOv:{},dayNote:{},gridStart:'2026-10-05',days:120,capa:12,crew:2,skipWeekend:true,craneOpen:false,
     holidays:['2026-10-05','2026-10-09','2026-12-25','2027-01-01'],capaOv:{}},
-    master:Object.assign(JSON.parse(JSON.stringify(SEED.master)),{seedVer:SEED.version}),equipments:[]};
+    master:Object.assign(JSON.parse(JSON.stringify(SEED.master)),{seedVer:SEED.version}),equipments:[],extras:[]};
+  s.settings.vendors=parseVendors(DEFVENDORS);
   return s;
 }
 function load(){
   try{const t=localStorage.getItem(KEY); if(t){const o=JSON.parse(t); if(o&&o.master&&o.equipments){migrate(o);return o}}}catch(e){}
   return null;
 }
-function migrate(o){const s=o.settings;if(!s.load1)s.load1={bal:{},asm:{}};
+function migrate(o){const s=o.settings;if(!Array.isArray(o.extras))o.extras=[];if(!Array.isArray(s.vendors))s.vendors=parseVendors(DEFVENDORS);if(!s.load1)s.load1={bal:{},asm:{}};
   if(s.load1.asm&&Object.keys(s.load1.asm).length&&!s.load1.tot){const L=s.load1,tt={};for(const d of new Set([...Object.keys(L.bal||{}),...Object.keys(L.asm)]))tt[d]=Math.round(((+(L.bal||{})[d]||0)+(+L.asm[d]||0))*1000)/1000;L.tot=tt;L.asm={}} // 구버전(발란싱+조립시운전 입력) → Total 입력 방식으로 변환if(!s.dayOv)s.dayOv={};if(!s.dayNote)s.dayNote={};
   if(s.capa==null||s.capa2!=null){const c2=s.capa2??6,c3=s.capa3??6;s.capa=c2+c3;const ov=s.capaOv||{},n={};
     for(const k in ov){if(!k.includes('|'))n[k]=ov[k]}
@@ -468,6 +481,8 @@ function schedule(eq){
     arr.push({inst,d,ord:inst.order!=null?inst.order:(Number(d.no)||0)});
   }
   arr.sort((a,b)=>a.ord-b.ord);
+  const MTS=exFor(eq).filter(x=>x.type==='mt'&&x.date); // 자재 입고 후 진행 공정: 입고일 이전에는 시작할 수 없음
+  const matOf=inst=>{const l=MTS.filter(x=>mtMatch(x,eq,inst));return l.length?{mn:Math.max(...l.map(x=>wdIdx(dn(x.date)))),info:l.map(x=>`${x.name} ${md2(dn(x.date))} 입고`).join(', ')}:null};
   let cursor=wdIdx(dn(eq.start));
   const anchors={};
   for(const it of arr){
@@ -480,6 +495,7 @@ function schedule(eq){
     if(inst.manualStart!=null)s=inst.manualStart;
     else if(d.parNo!==''&&d.parNo!=null&&anchors[d.parNo]!=null)s=anchors[d.parNo]+Number(d.parOff||0);
     else s=cursor;
+    const mo=matOf(inst);if(mo){it.matInfo=mo.info;if(s<mo.mn){s=mo.mn;it.matHold=true}}
     const ow=d.owner||'HP';
     it.ot=0;let L=it.lt;
     if(d.ot==='O'&&it.lt>1+1e-6){const fr=it.lt-Math.floor(it.lt+1e-9);if(fr>1e-6&&fr<=0.5+1e-9){it.ot=fr;L=it.lt-fr}} // 잔업: 마지막 날 초과분(≤0.5일)을 그 날 부하로 합산
@@ -508,6 +524,7 @@ function calc(){
   for(const eq of S.equipments){
     const items=schedule(eq);SCH.set(eq.id,items);
     if(eq.done||eq.tbd)continue; // 생산완료·일정 미확정 장비는 부하·크레인 집계에서 제외
+    for(const x of exFor(eq))for(const [i,ld] of exLoads(x)){add(AGG.load,i,ld);add(x.site==='3P'?AGG.load3:AGG.load2,i,ld)} // 비계획 사내 작업 부하
     for(const it of items){
       const d=it.d,ls=Math.floor(it.s+1e-9),le=Math.ceil(it.e-1e-9);
       for(let i=ls;i<le;i++){
@@ -547,7 +564,7 @@ function layoutEq(items,xS,xE){
     const nm=d.name;
     const fn={fs:CARDFS,lines:wrapN(nm+(it.part?' '+it.part[0]+'/'+it.part[1]:''),(inner-11)*0.95,CARDFS).lines};it._fs=CARDFS;
     const l1=fn.lines*fn.fs*1.25/14.375;
-    let pw=tw(cardLbl(it),10.5,true)+10+(d.witness==='O'?32:0)+28+(it.crew===3?28:0);
+    let pw=tw(cardLbl(it),10.5,true)+10+(d.witness==='O'?32:0)+28+(it.crew===3?28:0)+(it.matInfo?24:0);
     const rows=Math.max(1,Math.ceil(pw/(it._w-14)));
     it._h=Math.ceil(5+l1*14.375+rows*14+(rows>0?1:0));
   }
@@ -562,6 +579,58 @@ function packLanes(items){
     it._top=top;placed.push(it);bottom=Math.max(bottom,top+it._h);
   }
   return Math.max(bottom+2,LANEH);
+}
+/* ---------- 비계획 작업 · 외주공정 · 자재 입고 (공정카드 아래 3개 라인) ---------- */
+const EXH=30,EXLBL=[['📌','비계획 작업 현황','up'],['🏭','외주공정 현황','os'],['📦','자재 입고 현황','mt']];
+const exFor=eq=>(S.extras||[]).filter(x=>(x.type==='up'||x.type==='mt')&&x.scope==='proj'?x.key===eqKey(eq):x.eqId===eq.id);
+const mtMatch=(x,eq,inst)=>x.scope==='proj'?(x.pids||[]).includes(inst.pid):(x.procUids||[]).includes(inst.uid);
+let XHIDE={up:false,os:false,mt:false};try{Object.assign(XHIDE,JSON.parse(localStorage.getItem('xHide')||'{}'))}catch(e){}
+const XKEYS=['up','os','mt'];
+const f1x=v=>Math.round((+v||0)*10)/10;
+function exSpan(x){
+  const kind=x.type==='os'?'out':x.kind,own=kind==='in'?'HP':'협력업체',crew=+x.crew||S.settings.crew;
+  const L=kind==='in'?(+x.mh||0)/HPD/crew:(+x.lt||0),s=nextAvail(own,wdIdx(dn(x.start))),e=L>0?addWork(s,L,own):s;
+  return{s,e,L,own,kind,crew};
+}
+function exLoads(x){ // [작업일 index, Man-day 부하] — 사내 작업분만
+  if(x.type!=='up'||x.kind==='out')return[];
+  const sp=exSpan(x),out=[];if(sp.L<=0)return out;
+  const ls=Math.floor(sp.s+1e-9),le=Math.ceil(sp.e-1e-9),ov=i=>Math.min(sp.e,i+1)-Math.max(sp.s,i);
+  if(x.kind==='in'){for(let i=ls;i<le;i++){const o=ov(i);if(o>1e-9&&availIdx('HP',i))out.push([i,sp.crew*o])}}
+  else{let tot=0;for(let i=ls;i<le;i++)if(availIdx('HP',i)&&ov(i)>1e-9)tot+=ov(i);
+    if(tot>1e-9)for(let i=ls;i<le;i++){const o=ov(i);if(o>1e-9&&availIdx('HP',i))out.push([i,((+x.mh||0)/HPD)*o/tot])}}
+  return out;
+}
+function matMin(eq,uid){const inst=eq.procs.find(p=>p.uid===uid);if(!inst)return null;let m=null;for(const x of exFor(eq))if(x.type==='mt'&&x.date&&mtMatch(x,eq,inst)){const i=wdIdx(dn(x.date));if(m==null||i>m)m=i}return m}
+const exKindTxt=x=>x.type==='os'?'외주':({in:'사내',out:'외주',mix:'사내+외주'})[x.kind];
+function exSub(x){
+  if(x.type==='mt')return [x.qty,(x.procUids||[]).length?`→ 공정 ${(x.procUids||[]).length}개`:'',x.scope==='proj'?'· 과제전체':''].filter(Boolean).join(' ');
+  if(x.type==='os')return `${x.cat||''} ${x.vendor||''} LT ${f1x(x.lt)}d`.trim();
+  if(x.kind==='in')return `사내 ${f1x(x.mh)}h`;
+  if(x.kind==='out')return `외주 LT ${f1x(x.lt)}d${x.vendor?' '+x.vendor:''}`;
+  return `복합 ${f1x(x.mh)}h / LT ${f1x(x.lt)}d`;
+}
+function exLines(eq,xS,xE,gs){
+  const lines=[[],[],[]];
+  for(const x of exFor(eq)){
+    const li=x.type==='up'?0:x.type==='os'?1:2;let x1,x2;
+    if(x.type==='mt'){x1=(dn(x.date)-gs)*COLW;x2=x1+COLW}else{const sp=exSpan(x);x1=xS(sp.s);x2=xE(Math.max(sp.e,sp.s+0.15))}
+    lines[li].push({x,l:x1+1,w:Math.max(x2-x1-2,COLW-2)});
+  }
+  const lh=[];let html='',labels='';
+  lines.forEach((arr,li)=>{
+    if(XHIDE[XKEYS[li]]){lh.push(0);return}
+    arr.sort((a,b)=>a.l-b.l);const ends=[];
+    for(const c of arr){let k=0;while(ends[k]!=null&&ends[k]>c.l)k++;ends[k]=c.l+c.w+2;c.lane=k}
+    lh.push(Math.max(1,ends.length)*EXH+6);
+    html+=`<div class="xln" data-line="${li}"></div>`;
+    for(const c of arr){const x=c.x,kc=x.type==='up'?'xc-'+x.kind:'xc-'+x.type;
+      const tip=[`${EXLBL[li][1]}: ${x.name||''}`,x.type==='up'?`적용: ${x.scope==='proj'?'과제 전체':'이 장비'} · ${exKindTxt(x)}공정`:'',exSub(x),
+        x.type==='mt'?`입고예정 ${x.date||'-'}`:`시작 ${x.start||'-'}`,x.note?`비고: ${x.note}`:''].filter(Boolean).join('\n');
+      html+=`<div class="xcard ${kc}" data-eq="${eq.id}" data-xid="${x.id}" data-line="${li}" data-lane="${c.lane}" style="left:${c.l}px;width:${c.w}px" title="${esc(tip)}">${x.type==='mt'?'📦 ':''}<b>${esc(x.name||x.cat||'')}</b> <i>${esc(exSub(x))}${x.type==='up'&&x.scope==='proj'?' · 과제전체':''}</i></div>`}
+    labels+=`<div class="xl" data-line="${li}" style="width:${LW}px"><span>${EXLBL[li][0]} ${EXLBL[li][1]} <small>(${arr.length})</small></span><button class="btn sm" data-act="xadd" data-eq="${eq.id}" data-kind="${EXLBL[li][2]}">＋ 추가</button></div>`;
+  });
+  return{html,lh,sum:lh.reduce((a,b)=>a+b,0),labels};
 }
 function renderDash(){
   calc();
@@ -618,9 +687,9 @@ function renderDash(){
   const vis=S.equipments.filter(e=>!e.hidden&&!e.done);buildGCol(vis);
   for(const eq of vis){
     const vi=vis.indexOf(eq);
-    const items=SCH.get(eq.id),H=layoutEq(items,xS,xE);
+    const items=SCH.get(eq.id),H0=layoutEq(items,xS,xE),ex=exLines(eq,xS,xE,gs),H=H0+ex.sum;
     const sel=(f,arr,v)=>`<select class="fld" data-eq="${eq.id}" data-f="${f}">${arr.map(x=>`<option value="${x}"${String(x)===String(v)?' selected':''}>${f==='stage'?x+'단':x}</option>`).join('')}</select>`;
-    h+=`<div class="row erow" data-eq="${eq.id}" style="height:${H}px"><div class="left" style="height:${H}px${eqColor(eq)?`;--c:${eqColor(eq)};background:color-mix(in srgb,${eqColor(eq)} 38%,#fff)`:''}">
+    h+=`<div class="row erow" data-eq="${eq.id}" data-lh="${ex.lh.join(',')}" style="height:${H}px"><div class="left" style="height:${H}px${eqColor(eq)?`;--c:${eqColor(eq)};background:color-mix(in srgb,${eqColor(eq)} 38%,#fff)`:''}">
       <div class="lc" style="width:${LEFTW[0]}px"><input class="fld" data-eq="${eq.id}" data-f="title" value="${esc(eq.title)}" title="과제명">${eq.tbd?'<span class="tbdb">⏳ 일정 미확정 · 부하 제외</span>':''}<div class="eact">
         <button class="btn sm" data-act="mup" data-eq="${eq.id}" title="위로 이동"${vi===0?' disabled':''}>▲</button><button class="btn sm" data-act="mdn" data-eq="${eq.id}" title="아래로 이동"${vi===vis.length-1?' disabled':''}>▼</button><button class="btn sm" data-act="hide" data-eq="${eq.id}" title="이 장비 숨기기">🙈</button><button class="btn sm${eq.tbd?' on':''}" data-act="tbd" data-eq="${eq.id}" title="${eq.tbd?'일정 미확정 상태 — 클릭하면 확정(부하 산정에 포함)':'자재 이슈 등으로 일정 미확정 — 계획은 표시하되 부하 산정에서 제외'}">⏳ ${eq.tbd?'미확정 중':'미확정'}</button><button class="btn sm" data-act="done" data-eq="${eq.id}" title="생산완료 처리 (대시보드에서 제외, '완료장비' 탭에서 확인)">✔ 완료</button>
         <button class="btn sm" data-act="edit" data-eq="${eq.id}" title="옵션/세부사항 수정">⚙ 옵션</button>
@@ -630,7 +699,7 @@ function renderDash(){
       <div class="lc" style="width:${LEFTW[2]}px">${sel('cat',CATS,eq.cat)}</div>
       <div class="lc" style="width:${LEFTW[3]}px">${sel('model',MODELS,eq.model)}</div>
       <div class="lc" style="width:${LEFTW[4]}px">${sel('stage',STAGES,eq.stage)}</div>
-      <div class="lc" style="width:${LEFTW[5]}px"><input class="fld" data-eq="${eq.id}" data-f="unit" value="${esc(eq.unit||'')}" title="호기"></div></div>
+      <div class="lc" style="width:${LEFTW[5]}px"><input class="fld" data-eq="${eq.id}" data-f="unit" value="${esc(eq.unit||'')}" title="호기"></div>${ex.labels}</div>
       <div class="tl" style="width:${TW}px;height:${H}px"><div class="bgd"></div>${nw}${tdy}`;
     for(const it of items){
       const d=it.d;
@@ -643,12 +712,12 @@ function renderDash(){
         it.est?`※ 해당 조합 공수 없음 → ${it.from||'미입력(0)'} 값으로 임시 대체`:'',d.remark?`비고: ${d.remark}`:''].filter(Boolean).join('\n');
       h+=`<div class="${cls}" data-eq="${eq.id}" data-uid="${it.inst.uid}" style="left:${it._x}px;width:${it._w}px;top:${it._top}px;height:${it._h}px;${cc?`background-color:${cc};border-color:${darker(cc)};border-left-color:${d.site==='3P'?'#2b7a6a':'#2f6f9f'};color:${textOn(cc)}`:''}" title="${esc(tip)}">
         <button class="cx" data-act="cdel" title="공정 삭제">×</button><button class="ins ib" data-pos="before" title="이 공정 앞에 공정 추가">＋</button><button class="ins ia" data-pos="after" title="이 공정 뒤에 공정 추가">＋</button><div class="c1" style="font-size:${it._fs||11.5}px">${esc(d.name)}${it.part?` <span class="part">${it.part[0]}/${it.part[1]}</span>`:''}</div>
-        <div class="c2">${d.witness==='O'?'<span class="pill w">입회</span>':''}<span class="sl"><span class="pill ${d.site==='3P'?'p3':'p2'}">${d.site||'-'}</span><span class="lt">${cardLbl(it)}</span></span>${it.crew===3?'<span class="pill">3인</span>':''}${it.ot?'<span class="pill ot">잔업</span>':''}${Object.keys(NIGHTOPT).filter(k=>eq.options.includes(k)&&((/시운전/.test(d.name)&&!/준비/.test(d.name))||d.opt1===k||d.opt2===k||d.opt3===k)).map(k=>`<span class="pill ngt" title="${NIGHTOPT[k][1]}">${NIGHTOPT[k][0]}</span>`).join('')}${isMove(d)&&d.dn==='O'?'<span class="pill dn">주간이동</span>':''}</div></div>`;
+        <div class="c2">${d.witness==='O'?'<span class="pill w">입회</span>':''}<span class="sl"><span class="pill ${d.site==='3P'?'p3':'p2'}">${d.site||'-'}</span><span class="lt">${cardLbl(it)}</span></span>${it.crew===3?'<span class="pill">3인</span>':''}${it.ot?'<span class="pill ot">잔업</span>':''}${it.matInfo?`<span class="pill mtp" title="${esc('자재 입고 후 진행: '+it.matInfo)}">📦</span>`:''}${Object.keys(NIGHTOPT).filter(k=>eq.options.includes(k)&&((/시운전/.test(d.name)&&!/준비/.test(d.name))||d.opt1===k||d.opt2===k||d.opt3===k)).map(k=>`<span class="pill ngt" title="${NIGHTOPT[k][1]}">${NIGHTOPT[k][0]}</span>`).join('')}${isMove(d)&&d.dn==='O'?'<span class="pill dn">주간이동</span>':''}</div></div>`;
     }
-    h+=`</div></div>`;
+    h+=ex.html+`</div></div>`;
   }
   h+=`</div>`;
-  $('#view').innerHTML=`<div class="legend"><span><i style="background:var(--p2bg);border:1px solid var(--p2)"></i>2P 작업</span><span><i style="background:var(--p3bg);border:1px solid var(--p3)"></i>3P 작업</span><span><i style="background:var(--amber)"></i>입회 공정</span><span>점선 테두리 = 추가한 공정</span><span>빗금 = 해당 조합 공수 없어 임시 대체값</span><span>카드를 좌우로 드래그(1/4일 단위)하면 이후 공정이 함께 이동 · 카드를 클릭하면 세부 수정</span></div><div id="gridwrap">${h}</div>`;
+  $('#view').innerHTML=`<div class="legend"><span><i style="background:var(--p2bg);border:1px solid var(--p2)"></i>2P 작업</span><span><i style="background:var(--p3bg);border:1px solid var(--p3)"></i>3P 작업</span><span><i style="background:var(--amber)"></i>입회 공정</span><span class="xtogs"><button class="btn sm xtog${XHIDE.up?'':' on'}" data-xtog="up">📌 비계획</button><button class="btn sm xtog${XHIDE.os?'':' on'}" data-xtog="os">🏭 외주</button><button class="btn sm xtog${XHIDE.mt?'':' on'}" data-xtog="mt">📦 자재</button><button class="btn sm" data-xtog="all">전체 숨김/열기</button></span><span>점선 테두리 = 추가한 공정</span><span>빗금 = 해당 조합 공수 없어 임시 대체값</span><span>카드를 좌우로 드래그(1/4일 단위)하면 이후 공정이 함께 이동 · 카드를 클릭하면 세부 수정</span></div><div id="gridwrap">${h}</div>`;
   fitCards();
   const w2=$('#gridwrap');w2.scrollLeft=sl;w2.scrollTop=stp;
 }
@@ -661,8 +730,113 @@ function fitCards(){
     let H=packLanes(items);
     const lf=$('.left',row),tl=$('.tl',row);if(lf&&tl){row.style.height='auto';tl.style.height='0px';lf.style.height='auto';H=Math.max(H,lf.offsetHeight)} // 과제명 칸 내용(제목·버튼)이 다 들어가도록 행 높이 확보
     for(const it of items){const c=cards.get(it.inst.uid);if(!c)continue;c.style.top=it._top+'px';c.style.height=it._h+'px'}
+    const lh=(row.dataset.lh||'').split(',').map(Number);let off=H;
+    lh.forEach((h2,li)=>{
+      const ln=$(`.xln[data-line="${li}"]`,row),lb=$(`.xl[data-line="${li}"]`,row);
+      if(ln){ln.style.top=off+'px';ln.style.height=h2+'px'}
+      if(lb){lb.style.top=off+'px';lb.style.height=h2+'px'}
+      $$(`.xcard[data-line="${li}"]`,row).forEach(c=>{c.style.top=(off+3+(+c.dataset.lane)*EXH)+'px';c.style.height=(EXH-2)+'px'});
+      off+=h2});
+    H=off;
     row.style.height=H+'px';$$('.left,.tl',row).forEach(x=>x.style.height=H+'px');
   }
+}
+
+const TODAYS=()=>ds(Math.floor(Date.now()/DAY+9/24));
+function openVendorMgr(back){
+  openModal(`<div class="mhead">외주 카테고리 · 업체 목록 편집</div><div class="mbody">
+    <div class="note">한 줄에 하나씩 <b>카테고리 - 업체1, 업체2</b> 형식으로 적습니다. 줄을 수정·추가·삭제하면 외주공정 선택 목록에 반영됩니다. (이미 등록된 외주공정 항목의 이름은 그대로 유지됩니다)</div>
+    <textarea id="vm_t" rows="12" style="width:100%;margin-top:8px">${esc(vendorsText())}</textarea></div>
+    <div class="mfoot"><button class="btn" id="vm_r" style="margin-right:auto">기본 목록으로</button><button class="btn" id="vm_c">취소</button><button class="btn pri" id="vm_s">저장</button></div>`,true);
+  $('#vm_r').onclick=()=>{$('#vm_t').value=DEFVENDORS};
+  $('#vm_c').onclick=()=>{closeModal();back&&back()};
+  $('#vm_s').onclick=()=>{S.settings.vendors=parseVendors($('#vm_t').value);save();closeModal();back&&back()};
+}
+function openExtraView(id){
+  const x=(S.extras||[]).find(q=>q.id===id);if(!x)return;
+  const eq=S.equipments.find(e=>e.id===x.eqId)||{};
+  const rows=[['구분',x.type==='up'?'비계획 작업':x.type==='os'?'외주공정':'자재 입고'],['작업명/품목',x.name||x.cat||''],
+    x.type!=='os'?['적용 범위',x.scope==='proj'?'과제 전체':'이 장비']:null,x.type!=='mt'?['공정 구분',exKindTxt(x)]:null,['내용',exSub(x)],
+    x.type==='mt'?['입고 예정일',x.date||'-']:['시작일',x.start||'-'],x.type==='os'?['외주 카테고리/업체',`${x.cat||'-'} / ${x.vendor||'-'}`]:null,x.note?['비고',x.note]:null].filter(Boolean);
+  openModal(`<div class="mhead">${esc(x.name||x.cat||'')}</div><div class="mbody"><table class="tbl">${rows.map(r=>`<tr><th style="width:120px">${r[0]}</th><td>${esc(r[1])}</td></tr>`).join('')}</table></div><div class="mfoot"><button class="btn pri" id="xv_c">닫기</button></div>`,true);
+  $('#xv_c').onclick=closeModal;
+}
+function openExtra(eqId,type,id,draft){
+  if(RO){openExtraView(id);return}
+  const eq=S.equipments.find(e=>e.id===eqId);if(!eq)return;
+  const old=id?(S.extras||[]).find(q=>q.id===id):null;type=type||(old&&old.type);if(!type)return;
+  const x=Object.assign({type,scope:'eq',kind:'in',site:'2P',crew:S.settings.crew,mh:0,lt:0,start:TODAYS(),date:TODAYS(),name:'',cat:'',vendor:'',note:'',qty:'',procUids:[]},old||{},draft||{});
+  const V=S.settings.vendors||[],opt=(arr,v)=>arr.map(a=>`<option value="${esc(a)}"${a===v?' selected':''}>${esc(a)}</option>`).join('');
+  const procs=[...(SCH.get(eq.id)||[])].sort((a,b)=>a.ord-b.ord).filter(i=>(i.d.owner||'HP')==='HP');
+  const allVs=[...new Set(V.flatMap(c=>c.vs))];
+  const ttl={up:'비계획 작업',os:'외주공정',mt:'자재 입고'}[type];
+  let body='';
+  if(type==='up')body=`<label class="fl">작업명<input id="x_name" value="${esc(x.name)}" placeholder="예) 현합 추가 작업, 재작업"></label>
+    <div class="fl">적용 범위
+      <label class="ck"><input type="radio" name="x_sc" value="eq"${x.scope!=='proj'?' checked':''}> 이 장비만</label>
+      <label class="ck"><input type="radio" name="x_sc" value="proj"${x.scope==='proj'?' checked':''}> 이 과제 전체 <span class="note">(${esc(eq.title)}${eq.code?' · '+esc(eq.code):''} — 같은 과제명·과제코드 장비 모두)</span></label></div>
+    <div class="fl">공정 구분
+      <label class="ck"><input type="radio" name="x_kind" value="in"${x.kind==='in'?' checked':''}> 사내공정</label>
+      <label class="ck"><input type="radio" name="x_kind" value="out"${x.kind==='out'?' checked':''}> 외주공정</label>
+      <label class="ck"><input type="radio" name="x_kind" value="mix"${x.kind==='mix'?' checked':''}> 사내·외주 복합</label></div>
+    <div class="g2" id="x_inrow"><label class="fl">작업장<select id="x_site"><option${x.site==='2P'?' selected':''}>2P</option><option${x.site==='3P'?' selected':''}>3P</option></select></label>
+      <label class="fl">작업 인원<select id="x_crew"><option value="2"${+x.crew===2?' selected':''}>2인 1조</option><option value="3"${+x.crew===3?' selected':''}>3인 1조</option></select></label>
+      <label class="fl">소요 Man hour (사내)<input id="x_mh" type="number" step="0.5" min="0" value="${x.mh}"></label></div>
+    <div class="g2" id="x_outrow"><label class="fl">LT (일, 외주)<input id="x_lt" type="number" step="0.5" min="0" value="${x.lt}"></label>
+      <label class="fl">외주 업체 <span class="note">(선택)</span><input id="x_vendor" list="x_vl" value="${esc(x.vendor)}"><datalist id="x_vl">${allVs.map(v=>`<option value="${esc(v)}">`).join('')}</datalist></label></div>
+    <label class="fl">시작일<input id="x_start" type="date" value="${x.start}"></label>
+    <div class="note" id="x_prev"></div>`;
+  else if(type==='os')body=`<div class="g2"><label class="fl">외주 카테고리<select id="x_cat">${opt(V.map(c=>c.cat),x.cat)}</select></label>
+      <label class="fl">외주 업체<select id="x_vsel"></select></label></div>
+    <label class="fl" id="x_vfree" style="display:none">업체명 직접 입력<input id="x_vendor" value="${esc(x.vendor)}"></label>
+    <div class="g2"><label class="fl">LT (일)<input id="x_lt" type="number" step="0.5" min="0" value="${x.lt}"></label>
+      <label class="fl">시작일<input id="x_start" type="date" value="${x.start}"></label></div>
+    <label class="fl">작업/품명 <span class="note">(선택, 카드에 표시)</span><input id="x_name" value="${esc(x.name)}" placeholder="예) 흡입배관 제작"></label>
+    <div class="note"><button class="btn sm" id="x_vm" type="button">⚙ 카테고리·업체 목록 편집/추가</button></div>`;
+  else body=`<label class="fl">자재 품목<input id="x_name" value="${esc(x.name)}" placeholder="예) 임펠러, 시일, 배관 자재"></label>
+    <div class="fl">적용 범위
+      <label class="ck"><input type="radio" name="x_sc" value="eq"${x.scope!=='proj'?' checked':''}> 이 장비만</label>
+      <label class="ck"><input type="radio" name="x_sc" value="proj"${x.scope==='proj'?' checked':''}> 이 과제 전체 <span class="note">(같은 과제명·과제코드 장비 모두 — 선택한 공정과 같은 공정에 각각 적용)</span></label></div>
+    <div class="g2"><label class="fl">입고 예정일<input id="x_date" type="date" value="${x.date}"></label><label class="fl">수량/규격 <span class="note">(선택)</span><input id="x_qty" value="${esc(x.qty)}"></label></div>
+    <div class="fl">입고되어야 진행되는 사내 공정 <span class="note">(선택 시 그 공정은 입고일 이후에만 시작됩니다. 입고 당일 또는 이후로는 자유롭게 조정 가능)</span>
+      <div style="max-height:190px;overflow:auto;border:1px solid var(--line);border-radius:6px;padding:4px 8px;background:#fff">${procs.length?procs.map(i=>`<label class="ck" style="display:flex"><input type="checkbox" class="x_pu" value="${i.inst.uid}" data-pid="${esc(i.inst.pid)}"${(x.scope==='proj'?(x.pids||[]).includes(i.inst.pid):(x.procUids||[]).includes(i.inst.uid))?' checked':''}> ${esc(i.d.name)} <span class="note">(현재 ${md2(wdDate(Math.floor(i.s+1e-9)))} 시작)</span></label>`).join(''):'<span class="note">이 장비에 사내 공정이 없습니다.</span>'}</div></div>`;
+  openModal(`<div class="mhead">${ttl} ${old?'수정':'추가'} — ${esc(eq.title)}</div><div class="mbody">${body}
+    <label class="fl">비고<input id="x_note" value="${esc(x.note)}"></label></div>
+    <div class="mfoot">${old?'<button class="btn dng" id="x_del" style="margin-right:auto">삭제</button>':''}<button class="btn" id="x_c">취소</button><button class="btn pri" id="x_s">${old?'저장':'추가'}</button></div>`);
+  const g=s=>{const e=$(s);return e?e.value:''};
+  const kind=()=>(document.querySelector('input[name=x_kind]:checked')||{}).value||'in';
+  const collect=()=>{const o={type,eqId:eq.id,name:g('#x_name').trim(),note:g('#x_note').trim()};
+    if(type==='up'){Object.assign(o,{scope:(document.querySelector('input[name=x_sc]:checked')||{}).value||'eq',kind:kind(),site:g('#x_site'),crew:+g('#x_crew'),mh:+g('#x_mh')||0,lt:+g('#x_lt')||0,vendor:g('#x_vendor').trim(),start:g('#x_start')})}
+    else if(type==='os'){const vs=g('#x_vsel');Object.assign(o,{cat:g('#x_cat'),vendor:vs==='__free'?g('#x_vendor').trim():vs,lt:+g('#x_lt')||0,start:g('#x_start')})}
+    else{const ck=[...document.querySelectorAll('.x_pu:checked')];Object.assign(o,{scope:(document.querySelector('input[name=x_sc]:checked')||{}).value||'eq',date:g('#x_date'),qty:g('#x_qty').trim(),procUids:ck.map(c=>c.value),pids:ck.map(c=>c.dataset.pid)})}
+    return o};
+  if(type==='up'){
+    const sync=()=>{const k=kind();$('#x_inrow').style.display=k==='out'?'none':'';$('#x_outrow').style.display=k==='in'?'none':'';
+      $('#x_outrow label:nth-child(2)').style.display=k==='in'?'none':'';
+      const o=collect(),sp=exSpan(Object.assign({type:'up'},o));$('#x_prev').textContent=sp.L>0?`예상 소요 ${f1x(sp.L)}일 (${k==='in'?`${f1x(o.mh)}h ÷ ${HPD}h ÷ ${o.crew}인`:'외주 LT 기준'})${k!=='out'?` · 사내 부하 ${f1x(o.mh/HPD)} Man-day`:''}`:''};
+    $$('#modalRoot input,#modalRoot select').forEach(e=>e.addEventListener('input',sync));sync();
+  }
+  if(type==='os'){
+    const fillV=()=>{const c=V.find(c=>c.cat===g('#x_cat'));const vs=c?c.vs:[];const sel=$('#x_vsel');
+      const cur=x.vendor;sel.innerHTML=vs.map(v=>`<option value="${esc(v)}"${v===cur?' selected':''}>${esc(v)}</option>`).join('')+`<option value="__free"${cur&&!vs.includes(cur)?' selected':''}>(직접 입력)</option>`;
+      $('#x_vfree').style.display=sel.value==='__free'?'':'none'};
+    $('#x_cat').onchange=()=>{x.vendor='';fillV()};$('#x_vsel').onchange=()=>{$('#x_vfree').style.display=$('#x_vsel').value==='__free'?'':'none'};fillV();
+    $('#x_vm').onclick=()=>{const d=collect();openVendorMgr(()=>openExtra(eqId,type,id,d))};
+  }
+  $('#x_c').onclick=closeModal;
+  if($('#x_del'))$('#x_del').onclick=()=>{if(old.scope==='proj'&&!confirm('이 과제 전체에 적용된 항목입니다. 모든 장비에서 삭제됩니다. 계속할까요?'))return;S.extras=S.extras.filter(q=>q.id!==id);save();closeModal();render()};
+  $('#x_s').onclick=()=>{
+    const o=collect();
+    if(type!=='os'&&!o.name){alert(type==='mt'?'자재 품목명을 입력하세요.':'작업명을 입력하세요.');return}
+    if(type==='os'&&!o.cat){alert('외주 카테고리를 선택하세요.');return}
+    if(type==='mt'){if(!o.date){alert('입고 예정일을 입력하세요.');return}}
+    else if(!o.start){alert('시작일을 입력하세요.');return}
+    if(type==='up'){if(o.kind!=='out'&&!(o.mh>0)){alert('사내 작업은 소요 Man hour를 입력하세요.');return}if(o.kind!=='in'&&!(o.lt>0)){alert('외주 작업은 LT(일)를 입력하세요.');return}}
+    if(type==='os'&&!(o.lt>0)){alert('외주공정은 LT(일)를 입력하세요.');return}
+    if((type==='up'||type==='mt')&&o.scope==='proj')o.key=eqKey(eq);
+    if(old)Object.assign(old,o);else S.extras.push(Object.assign({id:uid()},o));
+    save();closeModal();render();
+  };
 }
 function openDayStatus(date){
   const n=dn(date),di=wdIdx(n),isWd=WD[di]===n;
@@ -679,6 +853,7 @@ function openDayStatus(date){
       const ld=hp?it.crew*Math.max(ov,0):0;
       rows.push({eq,it,d,ov:Math.max(ov,0),ld,hp,c3:crane3Line(d,eq)});
     }
+    for(const x of exFor(eq))for(const [i,ld] of exLoads(x))if(i===di)rows.push({eq,it:{part:null,ot:0},d:{name:'[비계획] '+x.name,site:x.site||'2P',owner:'HP',witness:'X',type:'비계획'},ov:x.kind==='in'?ld/(+x.crew||S.settings.crew):ld,ld,hp:true,c3:null});
     // 잔업 부하(마지막 날에 합산되는 초과분)는 calc()와 동일하게 표에 반영
   }
   const A=AGG||{load:new Map(),load2:new Map(),load3:new Map(),c2:new Map(),c3:{A:new Map(),B:new Map(),C:new Map()}};
@@ -1180,6 +1355,15 @@ $('#btnImp').onclick=()=>$('#fileImp').click();
 $('#fileImp').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);if(!o.master||!o.equipments)throw 0;S=o;buildCal();save();render();toast('불러왔습니다')}catch(x){alert('올바른 백업 파일이 아닙니다.')}};r.readAsText(f);e.target.value=''};
 
 const view=$('#view');
+let xdrag=null;
+view.addEventListener('pointerdown',e=>{const c=e.target.closest('.xcard');if(!c||e.button!==0)return;xdrag={c,x0:e.clientX,moved:false,id:c.dataset.xid,eq:c.dataset.eq};if(!RO)c.setPointerCapture(e.pointerId)});
+view.addEventListener('pointermove',e=>{if(!xdrag)return;const dx=e.clientX-xdrag.x0;if(Math.abs(dx)>4)xdrag.moved=true;if(xdrag.moved&&!RO)xdrag.c.style.transform=`translateX(${Math.round(dx/COLW)*COLW}px)`});
+view.addEventListener('pointerup',e=>{if(!xdrag)return;const d=xdrag;xdrag=null;d.c.style.transform='';
+  if(!d.moved||RO){openExtra(d.eq,null,d.id);return}
+  const days=Math.round((e.clientX-d.x0)/COLW);if(!days)return;const x=S.extras.find(q=>q.id===d.id);if(!x)return;
+  const f=x.type==='mt'?'date':'start';x[f]=ds(dn(x[f])+days);save();render()});
+view.addEventListener('pointercancel',()=>{if(xdrag){xdrag.c.style.transform='';xdrag=null}});
+
 view.addEventListener('click',e=>{
   const c1=e.target.closest('[data-act=capa1Max]');
   if(c1){const v=parseFloat($('#capa1Max').value);if(isNaN(v)||v<0){alert('Max 값을 0 이상의 숫자로 입력하세요.');return}
@@ -1187,6 +1371,8 @@ view.addEventListener('click',e=>{
   const cm=e.target.closest('[data-act=capaMax]');
   if(cm){const v=parseFloat($('#capaMax').value);if(isNaN(v)||v<0){alert('Max 값을 0 이상의 숫자로 입력하세요.');return}
     S.settings.capa=v;S.settings.capaOv={};save();render();toast(`모든 일자에 capa ${v} 적용 (휴일은 0)`);return}
+  const xt=e.target.closest('[data-xtog]');if(xt){const k=xt.dataset.xtog;if(k==='all'){const h=!XKEYS.every(q=>XHIDE[q]);XKEYS.forEach(q=>XHIDE[q]=h)}else XHIDE[k]=!XHIDE[k];try{localStorage.setItem('xHide',JSON.stringify(XHIDE))}catch(e){}render();return}
+  const xa=e.target.closest('[data-act=xadd]');if(xa){openExtra(xa.dataset.eq,xa.dataset.kind);return}
   const ib=e.target.closest('.ins');
   if(ib){const c=ib.closest('.card');openAddProc(c.dataset.eq,{uid:c.dataset.uid,pos:ib.dataset.pos});return}
   const cx=e.target.closest('.cx');
@@ -1213,7 +1399,7 @@ view.addEventListener('click',e=>{
   else if(a==='hide'){const eq=S.equipments.find(x=>x.id===id);eq.hidden=true;save();render();toast(`'${eq.title}' 숨김 (상단 '숨김 장비'에서 다시 표시)`)}
   else if(a==='edit')openEquip(id);
   else if(a==='addproc')openAddProc(id);
-  else if(a==='del'){const eq=S.equipments.find(x=>x.id===id);if(confirm(`'${eq.title}' 장비를 삭제할까요?`)){S.equipments=S.equipments.filter(x=>x.id!==id);save();render()}}
+  else if(a==='del'){const eq=S.equipments.find(x=>x.id===id);if(confirm(`'${eq.title}' 장비를 삭제할까요?`)){S.equipments=S.equipments.filter(x=>x.id!==id);S.extras=(S.extras||[]).filter(q=>q.eqId!==id||q.scope==='proj');save();render()}}
   else if(a==='psort'){ui.psortDir=ui.psortDir==='asc'?'desc':'asc';const k=ui.psortDir==='asc'?1:-1;
     S.master.processes=S.master.processes.map((p,i)=>[p,i]).sort((x,y)=>((+x[0].no||0)-(+y[0].no||0))*k||(x[1]-y[1])).map(x=>x[0]);masterChanged();renderProc();toast(`공정No ${k>0?'오름':'내림'}차순으로 정렬했습니다`)}
   else if(a==='oadd'){const inp=$('#o_new'),n=(inp.value||'').trim();if(!n)return;if(S.master.options.includes(n)){toast('이미 있는 옵션입니다');return}
@@ -1317,6 +1503,7 @@ function applyMove(eq,uid,ni,push){
 function askShift(eqId,uid,ni){
   const eq=S.equipments.find(x=>x.id===eqId);if(!eq)return;
   const list=[...(SCH.get(eqId)||[])].sort((a,b)=>a.ord-b.ord),k=list.findIndex(x=>x.inst.uid===uid);if(k<0)return;
+  const mn=matMin(eq,uid);if(mn!=null&&ni<mn){ni=mn;toast('자재 입고일 이전으로는 이동할 수 없어 입고일로 맞췄습니다')}
   const cur=list[k],delta=ni-cur.s;if(Math.abs(delta)<1e-9){render();return}
   const fol=list.filter((x,j)=>j>k&&x.s>=cur.s-1e-6);
   const to=md2(wdDate(Math.floor(ni+1e-9))),fin=(push,msg)=>{applyMove(eq,uid,ni,push);save();render();toast(msg)};
@@ -1476,7 +1663,21 @@ function xlsSheet(rows,widths,freeze,heights){
 }
 const _xc={};
 function colorXf(hex){const h=hex.replace('#','').toUpperCase();if(_xc[h]!=null)return _xc[h];XFILLS.push(h);XFS.push([textOn('#'+h)==='#FFFFFF'?4:3,XFILLS.length-1,0,'center',1]);return _xc[h]=XFS.length-1}
-function exportXlsx(){
+function openXlsDlg(){
+  openModal(`<div class="mhead">엑셀 다운로드 — 포함할 항목 선택</div><div class="mbody">
+    <label class="ck" style="display:flex"><input type="checkbox" id="xs_in" checked> <b>사내공정</b> <span class="note">(생산현황 · 공정목록 시트)</span></label>
+    <label class="ck" style="display:flex"><input type="checkbox" id="xs_up"> <b>비계획 작업</b> <span class="note">(시트 추가)</span></label>
+    <label class="ck" style="display:flex"><input type="checkbox" id="xs_os"> <b>외주공정</b> <span class="note">(시트 추가)</span></label>
+    <label class="ck" style="display:flex"><input type="checkbox" id="xs_mt"> <b>자재 현황</b> <span class="note">(시트 추가)</span></label></div>
+    <div class="mfoot"><button class="btn" id="xs_c">취소</button><button class="btn pri" id="xs_go">다운로드</button></div>`,true);
+  try{const s=JSON.parse(localStorage.getItem('xlsSel')||'null');if(s)for(const k of ['in','up','os','mt'])$('#xs_'+k).checked=!!s[k]}catch(e){}
+  $('#xs_c').onclick=closeModal;
+  $('#xs_go').onclick=()=>{const sel={};for(const k of ['in','up','os','mt'])sel[k]=$('#xs_'+k).checked;
+    if(!Object.values(sel).some(Boolean)){alert('하나 이상 선택하세요.');return}
+    try{localStorage.setItem('xlsSel',JSON.stringify(sel))}catch(e){}closeModal();exportXlsx(sel)};
+}
+function exportXlsx(sel){
+  sel=sel||{in:true,up:true,os:true,mt:true};
   XFILLS.length=XFILLS0;XFS.length=XFS0;for(const k in _xc)delete _xc[k];
   calc();
   const st=S.settings,gs=dn(st.gridStart),N=st.days;
@@ -1515,18 +1716,29 @@ function exportXlsx(){
   }
   rows.push([]);rows.push([{v:`※ ${ds(Math.floor(Date.now()/DAY+9/24))} 출력 · 셀 색: 공정 배경색(미지정 시 파랑=2P, 청록=3P) · 공수 8h=1 man-day`,s:XS.left}]);
   const w1=[26,12,10,10,7,7,...days.map(()=>13)],w2=[26,12,10,10,7,7,6,22,10,8,7,10,9,8,9,9,9,12,12,34];
-  const sh1=xlsSheet(rows,w1,[6,1],hts),sh2=xlsSheet(detail,w2,[0,1]);
+  const sheets=[];
+  if(sel.in){sheets.push(['생산현황',xlsSheet(rows,w1,[6,1],hts)]);sheets.push(['공정목록',xlsSheet(detail,w2,[0,1])])}
+  const HD=a=>a.map(t=>({v:t,s:XS.hdr})),base=eq=>[{v:eq.title,s:XS.left},{v:eq.code||'',s:XS.ctr},{v:eq.cat,s:XS.ctr},{v:eq.model,s:XS.ctr},{v:eq.stage+'단',s:XS.ctr},{v:eq.unit||'',s:XS.ctr}];
+  const BH=['과제명','과제코드','Category','모델명','단수','호기'],cell=v=>({v,s:typeof v==='number'?XS.num:XS.ctr});
+  const endD=sp=>ds(wdDate(Math.max(Math.ceil(sp.e-1e-9)-1,0)));
+  const exSheet=(type,head,wid,mk)=>{const R=[HD([...BH,...head])];
+    for(const eq of S.equipments){if(eq.done)continue;for(const x of exFor(eq))if(x.type===type)R.push([...base(eq),...mk(x,eq).map(cell)])}
+    if(R.length===1)R.push([{v:'(등록된 항목 없음)',s:XS.left}]);return xlsSheet(R,[26,12,10,10,7,7,...wid],[0,1])};
+  if(sel.up)sheets.push(['비계획작업',exSheet('up',['작업명','적용범위','구분','작업장','인원(조)','공수(h)','Man-day','LT(일)','외주업체','시작일','종료일','비고'],[22,10,10,8,8,9,9,8,14,12,12,30],(x,eq)=>{const sp=exSpan(x);return[x.name||'',x.scope==='proj'?'과제 전체':'이 장비',exKindTxt(x)+'공정',x.kind==='out'?'':(x.site||''),x.kind==='out'?'':sp.crew,x.kind==='out'?'':(+x.mh||0),x.kind==='out'?'':Math.round((+x.mh||0)/HPD*100)/100,x.kind==='in'?Math.round(sp.L*100)/100:(+x.lt||0),x.vendor||'',x.start||'',endD(sp),x.note||'']})]);
+  if(sel.os)sheets.push(['외주공정',exSheet('os',['카테고리','업체','작업/품명','LT(일)','시작일','종료일','비고'],[14,14,22,8,12,12,30],(x,eq)=>{const sp=exSpan(x);return[x.cat||'',x.vendor||'',x.name||'',+x.lt||0,x.start||'',endD(sp),x.note||'']})]);
+  if(sel.mt)sheets.push(['자재현황',exSheet('mt',['품목','적용범위','수량/규격','입고예정일','연결 공정(입고 후 진행)','비고'],[22,10,12,12,34,30],(x,eq)=>{const ps=(SCH.get(eq.id)||[]).filter(it=>mtMatch(x,eq,it.inst)).map(it=>it.d.name).join(', ');return[x.name||'',x.scope==='proj'?'과제 전체':'이 장비',x.qty||'',x.date||'',ps,x.note||'']})]);
+  const HX='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',RT='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
   const files=[
-    ['[Content_Types].xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/worksheets/sheet2.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`],
-    ['_rels/.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
-    ['xl/workbook.xml',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="생산현황" sheetId="1" r:id="rId1"/><sheet name="공정목록" sheetId="2" r:id="rId2"/></sheets></workbook>`],
-    ['xl/_rels/workbook.xml.rels',`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet2.xml"/><Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`],
-    ['xl/styles.xml',xlsStyles()],['xl/worksheets/sheet1.xml',sh1],['xl/worksheets/sheet2.xml',sh2]];
+    ['[Content_Types].xml',HX+'<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+sheets.map((s,k)=>`<Override PartName="/xl/worksheets/sheet${k+1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`).join('')+'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>'],
+    ['_rels/.rels',HX+`<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="${RT}/officeDocument" Target="xl/workbook.xml"/></Relationships>`],
+    ['xl/workbook.xml',HX+`<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="${RT}"><sheets>`+sheets.map((s,k)=>`<sheet name="${s[0]}" sheetId="${k+1}" r:id="rId${k+1}"/>`).join('')+'</sheets></workbook>'],
+    ['xl/_rels/workbook.xml.rels',HX+'<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+sheets.map((s,k)=>`<Relationship Id="rId${k+1}" Type="${RT}/worksheet" Target="worksheets/sheet${k+1}.xml"/>`).join('')+`<Relationship Id="rId${sheets.length+1}" Type="${RT}/styles" Target="styles.xml"/></Relationships>`],
+    ['xl/styles.xml',xlsStyles()],...sheets.map((s,k)=>[`xl/worksheets/sheet${k+1}.xml`,s[1]])];
   const a=document.createElement('a');a.href=URL.createObjectURL(zipStore(files));a.download='생산현황_'+ds(Math.floor(Date.now()/DAY+9/24))+'.xlsx';a.click();
   toast('엑셀 파일을 저장했습니다');
 }
 
-$('#btnXls').onclick=exportXlsx;
+$('#btnXls').onclick=openXlsDlg;
 /* ---------- 공유(편집용 → 열람용) ---------- */
 const DATA_FILE='plan_data.js';
 const buildDataJs=()=>'window.PLAN_DATA='+JSON.stringify({savedAt:new Date().toISOString(),state:S})+';';
