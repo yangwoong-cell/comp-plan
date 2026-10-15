@@ -97,9 +97,9 @@ input,select,textarea{font:inherit;color:inherit}
 .erow .left .xl{position:absolute;left:0;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 8px 0 14px;box-sizing:border-box;border-top:1px solid rgba(0,0,0,.18);background:rgba(255,255,255,.72);font-size:11.5px;font-weight:700;color:#2a3a4d;z-index:3}
 .xl small{font-weight:400;color:#667}
 .tl .xln{position:absolute;left:0;right:0;border-top:1px dashed #b9c2cf;background:rgba(255,255,255,.45);pointer-events:none}
-.tl .xcard{position:absolute;box-sizing:border-box;border-radius:6px;border:1px solid;padding:2px 6px;font-size:11px;line-height:18px;overflow:hidden;cursor:pointer;box-shadow:0 1px 2px rgba(20,30,50,.18);user-select:none;touch-action:none;z-index:2}
+.tl .xcard{position:absolute;box-sizing:border-box;border-radius:6px;border:1px solid;padding:2px 3px 2px 4px;font-size:11px;line-height:16px;overflow:hidden;cursor:pointer;box-shadow:0 1px 2px rgba(20,30,50,.18);user-select:none;touch-action:none;z-index:2}
 .xcard i{font-style:normal;font-size:10px;color:#445;opacity:.9}.xcard .x1,.xcard .x2{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.xcard .x2{line-height:15px}
-.xcard.s2{background:var(--p2bg);border-color:var(--p2);border-left-width:5px}.xcard.s3{background:var(--p3bg);border-color:var(--p3);border-left-width:5px}.xcard .pill{margin-right:2px;vertical-align:1px}.xcard.wit{box-shadow:0 1px 2px rgba(20,30,50,.18),inset 0 3px 0 var(--amber)}
+.xcard.s2{background:var(--p2bg);border-color:var(--p2);border-left-width:5px}.xcard.s3{background:var(--p3bg);border-color:var(--p3);border-left-width:5px}.xcard .pill{margin-right:2px;vertical-align:1px;line-height:13px;padding:0 4px}.xcard .x1 b{letter-spacing:-.3px}.xcard.wit{box-shadow:0 1px 2px rgba(20,30,50,.18),inset 0 3px 0 var(--amber)}
 .xtog{opacity:.55}.xtog.on{opacity:1;background:#fff3b8;border-color:#d9b800}.xtogs{display:inline-flex;gap:4px;margin-right:8px}
 .pill.mtp{background:#fff3b8;border-color:#d9b800}
 .card .ins{display:none;position:absolute;bottom:1px;width:15px;height:15px;line-height:13px;padding:0;border:0;border-radius:50%;background:#1d4f91;color:#fff;font-size:12px;font-weight:700;cursor:pointer;text-align:center;z-index:3}
@@ -637,7 +637,7 @@ function exLines(eq,xS,xE,gs){
     for(const c of arr){const x=c.x,kc=(exSite(x)==='3P'?'s3':'s2')+(x.wit?' wit':''),ic=x.type==='up'?'📌':x.type==='os'?'🏭':'📦';
       const tip=[`${EXLBL[li][1]}: ${x.name||''}`,x.type==='up'?`적용: ${x.scope==='proj'?'과제 전체':'이 장비'} · ${exKindTxt(x)}공정`:'',exSub(x),
         x.type==='mt'?`입고예정 ${x.date||'-'}`:`시작 ${x.start||'-'}`,x.note?`비고: ${x.note}`:''].filter(Boolean).join('\n');
-      html+=`<div class="xcard ${kc}" data-eq="${eq.id}" data-xid="${x.id}" data-line="${li}" data-lane="${c.lane}" style="left:${c.l}px;width:${c.w}px" title="${esc(tip)}"><div class="x1"><span class="pill ${exSite(x)==='3P'?'p3':'p2'}">${exSite(x)}</span>${x.wit?'<span class="pill w">입회</span>':''} ${c.w>=110?ic+' ':''}<b>${esc(x.name||x.cat||'')}</b></div><div class="x2"><i>${esc(exSub(x))||'&nbsp;'}${x.type==='up'&&x.scope==='proj'?' · 과제전체':''}</i></div></div>`}
+      html+=`<div class="xcard ${kc}" data-eq="${eq.id}" data-xid="${x.id}" data-line="${li}" data-lane="${c.lane}" style="left:${c.l}px;width:${c.w}px" title="${esc(tip)}"><div class="x1"><b>${esc(x.name||x.cat||'')}</b></div><div class="x2"><span class="pill ${exSite(x)==='3P'?'p3':'p2'}">${exSite(x)}</span>${x.wit?'<span class="pill w">입회</span>':''}<i>${esc(exSub(x))}${x.type==='up'&&x.scope==='proj'?' · 과제전체':''}</i></div></div>`}
     labels+=`<div class="xl" data-line="${li}" style="left:${LEFTW[0]}px;width:${LW-LEFTW[0]}px"><span>${EXLBL[li][0]} ${EXLBL[li][1]} <small>(${arr.length})</small></span><button class="btn sm" data-act="xadd" data-eq="${eq.id}" data-kind="${EXLBL[li][2]}">＋ 추가</button></div>`;
   });
   return{html,lh,sum:lh.reduce((a,b)=>a+b,0),labels};
